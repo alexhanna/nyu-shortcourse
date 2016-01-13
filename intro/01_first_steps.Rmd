@@ -1,0 +1,125 @@
+---
+title: "First steps in R"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+
+#### Using R as a calculator
+
+The most basic functionality of R is using it as a calculator
+
+```{r}
+10 / 2
+sqrt(100) + sqrt(9)
+exp(1)
+```
+
+What makes R very powerful is that you can store results as "objects"
+
+```{r}
+x = 5
+y = 10
+```
+
+If you look at the `Environment` panel on the top right, you can see that these numbers are stored in memory.
+
+Then you can do operations with them, the same way you would do with numbers:
+
+```{r}
+x * y
+```
+
+You can also save combinations of objects as new objects
+
+```{r}
+z <- x * y
+```
+
+Note the `<-` sign. That's the assignment operator. You can also use `=`, although `<-` is generally preferred (we can discuss why later).
+
+To print one of these objects in the console, you can do:
+
+```{r}
+print(z)
+```
+
+`print` here is a function: it takes a series of arguments (in this case, the object `z`) and returns a value (`50`).
+
+This is equivalent to just typing the name of the object in the console. (What's going on behind the scenes is that R is calling the default function to print this object; which in this case is just `print`).
+
+```{r}
+z
+```
+
+
+#### Vectors and basic visualization
+
+If objects have more than one element, they are called "vectors"
+
+```{r}
+height = c(181, 175, 179, 175, 176)
+```
+
+Note the use of the `c` (concatenate) function to put all 5 numbers together.
+For example, this vector contains the height in cm of five people.
+
+```{r}
+print(height)
+```
+
+You can create as many vectors as you want
+
+```{r}
+weight = c(80, 61, 74, 58, 67)
+```
+
+To visualize the relationship between the two variables, you can use the `plot` function
+
+```{r}
+plot(x=height, y=weight)
+```
+
+`plot` is a function just like `print`, but it takes multiple arguments. First, you specify the variable you want in the x-axis: `x=height`. Then, the one on the y-axis: `y=weight`.
+
+#### Finding help
+
+Now imagine that you want to add a title to your plot, but don't know how. You can use the help page for `plot`:
+```{r}
+?plot
+```
+
+And find that "main" is the option you're looking for
+
+```{r}
+plot(x=height, y=weight, main="Relationship between height and weight")
+```
+
+This is just a basic plot -- we will cover more advanced examples this afternoon
+
+#### Installing and loading packages
+
+There are many packages that expand the basic functionalities of R. For example, imagine that we want to make a map of the U.S. The package "maps" is exactly what we're looking for.
+
+First, we install it (you only need to do this once) typing the following:
+
+```{r, echo=FALSE}
+install.packages("maps", repos = "http://cran.rstudio.com/")
+```
+
+Alternatively:
+1) Go to the "Packages" tab on the bottom right panel
+2) Click on "Install Packages"
+3) Type "maps" and click on "Install"
+
+Now, we load the package (you will need to do this every time you want to use a function from the package)
+```{r}
+library(maps)
+```
+
+And we can use the "map" function to  draw a map of the US. Note that we need to specify the option 'database="state"'
+
+```{r}
+map(database="state")
+```
+

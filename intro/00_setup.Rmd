@@ -1,0 +1,32 @@
+---
+title: "RMarkdown setup"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+
+Welcome to the course! 
+
+Throughout the different modules, we will be using Markdown to interact with R. Markdown is a simple formatting syntax to generate HTML or PDF documents. In combination with R, it will generate a document that includes the comments, the R code, and the output of running such code.
+
+You can embed R code in chunks like this one:
+
+```{r}
+1 + 1
+```
+
+You can run each chunk of code one by one, by highlighting the code and clicking `Run` (or pressing `Ctrl + Enter` in Windows or `command + enter` in OS X). You can see the output of the code in the console right below, inside the RStudio window.
+
+Alternatively, you can generate (or **knit**) an html document with all the code, comment, and output in the entire `.Rmd` file by clicking on `Knit HTML`.
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+x <- c(1, 3, 4, 5)
+y <- c(2, 6, 8, 10)
+plot(x, y)
+```
+
+If you run the chunk of code, the plot will be generated on the panel on the bottom right corner. If instead you knit the entire file, the plot will appear after you view the html document.
+
+We will be learning more about R Markdown over the next few modeules. For more details on how to use it, see <http://rmarkdown.rstudio.com>.
