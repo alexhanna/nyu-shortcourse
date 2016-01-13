@@ -1,0 +1,66 @@
+---
+title: "Introduction to R text analysis"
+author: Alex Hanna
+date: January 21, 2016
+output: html_document
+---
+
+[&laquo; Text Analysis Module](../text/README.md)
+
+In this section we are going to focus on some basic string manipulation in R. We will be using some of the R base functionaity as well as the `stringr` package. For more information on the `stringr` package, check out the [documentation vignette](https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html).
+
+R stores the basic string in a character vector. `length` gets the number of items in the vector, while `nchar` is the number of characters in the vector.
+
+```{r results = "hide"}
+str1 <- 'This is a string.'
+is.character(str1)
+length(str1)
+nchar(str1)
+```
+
+We can also have multiple strings within one vector. A vector of strings is the most simple kind of data structure for storage.
+
+```{r results = "hide"}
+v_str1 <- c('This is a string.', 'This is also a string.', 'A third one goes here.')
+length(v_str1)
+nchar(v_str1)
+sum(nchar(v_str1))
+```
+
+It can also be part of a larger data frame of information. For this, load the dataset of tweets from the bullying project. Use `head` to look at the first few lines. 
+
+```{r results = "hide"}
+df.tweets <- read.csv("bullying.csv", header = TRUE, stringsAsFactors = FALSE)
+is.character(df.tweets$text)
+head(df.tweets$text)
+```
+
+Now we can start to dig into the text a little bit more. Given the construction of the dataset, we can expect that there will be many instances of the word "bully." We can use the `grep` command to identify these. `grep` returns the index where the word occurs.
+
+```{r results = "hide"}
+grep('bully', 'That guy is a buly.')
+grep('bully', 'That guy is a bully. Fixed that for you.')
+grep('bully', c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.'))
+```
+
+Within the dataset, we can use the results of `grep` to get particular rows. First, check if the number of tweets mentioning "bully" match the total number of rows in the data frame.
+```{r results = "hide"}
+nrow(df.tweets)
+length(grep('bully', df.tweets$text))
+```
+
+That didn't seem to work. That's because matching is case-sensitive. Use `grepl` to match to a lowercase version.
+```{r results = "hide"}
+length(grepl('bully', df.tweets$text))
+```
+
+<!--
+	1. String vectors
+	2. Basic operations
+		a. grep
+		b. str_to_lower, str_to_upper, str_to_title
+		c. str_match
+		d. substr
+		e. str_replace
+
+-->
