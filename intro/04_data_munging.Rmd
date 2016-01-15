@@ -1,0 +1,12 @@
+---
+title: "Data munging"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+
+Content:
+
+- reading data into R: csv, excel, stata, text... (and exporting it)
+- working with other types of data: text, dates, factors, matrices, lists...
+- reshaping, and aggregating data frames

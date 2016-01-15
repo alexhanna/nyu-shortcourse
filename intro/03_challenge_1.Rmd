@@ -1,0 +1,55 @@
+---
+title: "Challenge 1"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+
+Write commands that help you answer the following questions using the dataset `humansofnewyork.csv`. Try not to look at the previous code we used!
+
+```{r}
+
+```
+
+
+1. How many status updates have been posted on this page?
+
+```{r}
+
+```
+
+2. What is the total number of likes, comments, and shares it received?
+
+```{r}
+
+```
+
+3. What is the content of the post with the highest number of shares?
+
+```{r}
+
+```
+
+4. What was the date in which the first photo was posted?
+
+```{r}
+
+```
+
+5. What is the total number of likes that the page has ever received, excluding its most popular post?
+
+```{r}
+
+```
+
+6. How many posts have received more than 1,000,000 likes?
+
+```{r}
+
+```
+
+7. What was the total number of shares received by posts published each year?
+
+```{r}
+
+```

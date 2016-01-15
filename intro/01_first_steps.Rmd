@@ -13,7 +13,10 @@ The most basic functionality of R is using it as a calculator
 10 / 2
 sqrt(100) + sqrt(9)
 exp(1)
+2^3
 ```
+
+### Objects and operators
 
 What makes R very powerful is that you can store results as "objects"
 
@@ -36,15 +39,78 @@ You can also save combinations of objects as new objects
 z <- x * y
 ```
 
-Note the `<-` sign. That's the assignment operator. You can also use `=`, although `<-` is generally preferred (we can discuss why later).
+You can also modify existing objects.
 
-To print one of these objects in the console, you can do:
+```{r}
+x <- x + 1
+```
+
+Note the `<-` sign. That's the assignment operator. You can also use `=`, although `<-` is generally preferred. There's a more technical explanation for this preference, but another is that this way you avoid getting confused with `==`, which is used to compare objects:
+
+```{r}
+2 == 2
+c(1, 2, 3) == 2
+```
+
+Other logical operators are:
+
+```{r}
+1 != 2 # not equal to
+2 < 2 # less than
+2 <= 2 # less than or equal to
+2 > 2 # greater than
+2 >= 2 # greater than or equal to
+(2 < 2) | (2 <= 2) # or
+(2 < 2) & (2 <= 2) # and
+```
+
+### Data types
+
+R has five basic data types:
+
+1. numeric: `1.1`, `3`, `317`, `Inf`...
+2. logical: `TRUE` or `FALSE`
+3. character: `this is a character`, `hello world!`...
+4. integer: `1L`, `10L`... (rarely used)
+5. complex: `1i + 2`... (rarely used)
+
+A small trick regarding logical values is that they correspond to `1` and `0`. This will come in hand to count the number of `TRUE` values in a vector.
+
+```{r}
+x <- c(TRUE, TRUE, FALSE)
+x * 2
+sum(x)
+```
+
+There are a few special values: `NA`, which denotes a missing value, and `NaN`, which means Not a number. The values `Inf` and `-Inf` are considered numeric. `NULL` denotes a value that is undefined.
+
+```{r}
+0/0 # NaN
+x <- c(1, NA, 0)
+```
+
+You can find out the data type for each object in R using functions that start with `is.` and then the data type:
+
+```{r}
+is.numeric("hello world!")
+is.character("hello world")
+is.na("hello world")
+is.na(c(1, NA, 0))
+```
+
+Probably one of the most useful functions in R is `str`. It displays the internal structure of an object.
+
+```{r}
+str(x)
+```
+
+Of course you can always print the object in the console:
 
 ```{r}
 print(z)
 ```
 
-`print` here is a function: it takes a series of arguments (in this case, the object `z`) and returns a value (`50`).
+Note that `print` here is a function: it takes a series of arguments (in this case, the object `z`) and returns a value (`50`).
 
 This is equivalent to just typing the name of the object in the console. (What's going on behind the scenes is that R is calling the default function to print this object; which in this case is just `print`).
 
@@ -52,39 +118,34 @@ This is equivalent to just typing the name of the object in the console. (What's
 z
 ```
 
+#### Vectors
 
-#### Vectors and basic visualization
-
-If objects have more than one element, they are called "vectors"
+There are different types of data structures in R. (A data structure combines multiple values.) Vectors are the most common type. They can only contain values of one type (e.g. only numeric values, or only characters). 
 
 ```{r}
-height = c(181, 175, 179, 175, 176)
+math_scores = c(80, 75, 91, 67, 56)
 ```
 
 Note the use of the `c` (concatenate) function to put all 5 numbers together.
-For example, this vector contains the height in cm of five people.
+For example, this vector contains the scores of five students in a math test.
 
 ```{r}
-print(height)
-```
-
-You can create as many vectors as you want
-
-```{r}
-weight = c(80, 61, 74, 58, 67)
+print(math_scores)
 ```
 
 To visualize the relationship between the two variables, you can use the `plot` function
 
 ```{r}
-plot(x=height, y=weight)
+reading_scores = c(80, 61, 74, 58, 67)
+plot(x=math_scores, y=reading_scores)
 ```
 
-`plot` is a function just like `print`, but it takes multiple arguments. First, you specify the variable you want in the x-axis: `x=height`. Then, the one on the y-axis: `y=weight`.
+`plot` is a function just like `print`, but it takes multiple arguments. First, you specify the variable you want in the x-axis: `x=math_scores`. Then, the one on the y-axis: `y=reading_scores`.
 
 #### Finding help
 
 Now imagine that you want to add a title to your plot, but don't know how. You can use the help page for `plot`:
+
 ```{r}
 ?plot
 ```
@@ -92,10 +153,12 @@ Now imagine that you want to add a title to your plot, but don't know how. You c
 And find that "main" is the option you're looking for
 
 ```{r}
-plot(x=height, y=weight, main="Relationship between height and weight")
+plot(x=math_scores, y=reading_scores, main="Relationship between math and reading scores")
 ```
 
 This is just a basic plot -- we will cover more advanced examples this afternoon
+
+Don't worry about remembering all of these function names and options. You can always google them or use ?? to search functions (e.g. try searching `??histogram`). RStudio has also has an autocompletion function (e.g. try typing `matrix()` in the console and then press `TAB`). If you hover the cursor on the options that appear, you will have more information about what each of them mean.
 
 #### Installing and loading packages
 
@@ -112,14 +175,18 @@ Alternatively:
 2) Click on "Install Packages"
 3) Type "maps" and click on "Install"
 
-Now, we load the package (you will need to do this every time you want to use a function from the package)
+Now, we load the package, which will make all the functions in this package available for you to use. You only need to load the packages once per session.
+
 ```{r}
 library(maps)
 ```
 
-And we can use the "map" function to  draw a map of the US. Note that we need to specify the option 'database="state"'
+You can use the "map" function to  draw a map of the US. Note that you need to specify the option 'database="state"'
 
 ```{r}
 map(database="state")
 ```
+
+You can uninstall a package with `remove.packages()` and update it with `update.packages()`, but in practice these are rarely used.
+
 

@@ -1,0 +1,7 @@
+---
+title: "Challenge 2"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+

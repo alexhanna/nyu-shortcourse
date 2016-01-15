@@ -1,0 +1,150 @@
+---
+title: "Introduction to data analysis"
+author: "Pablo Barbera"
+date: "January 20, 2016"
+output: html_document
+---
+
+### Working with vectors
+
+
+```{r}
+math_scores <- c(72, 58, 85, 83, 87, 66, 72, 93, 87, 84)
+reading_scores <- c(50, 56, 76, 79, 74, 57, 80, 98, 90, 78)
+```
+
+We can also generate vector with the `seq` function:
+
+```{r}
+seq(1, 10, by=1)
+```
+
+Note that this is equivalent to:
+
+```{r}
+1:10
+```
+
+Functions to determine the structure of vectors:
+
+```{r}
+length(math_scores)
+head(math_scores)
+tail(math_scores)
+```
+
+How to subset vectors:
+
+```{r}
+math_scores[5]
+reading_scores[5]
+math_scores[-1]
+```
+
+Using vectors to subset vectors:
+
+```{r}
+math_scores[c(1,2,3)]
+math_scores[5:7]
+math_scores[-(1:5)] # note parentheses!
+```
+
+`which` function to compare all values of a vector
+
+```{r}
+which(math_scores>=80)
+high <- which(math_scores>=80)
+math_scores[high]
+```
+
+Statistical functions:
+
+```{r}
+mean(math_scores)
+sum(math_scores)
+sd(math_scores)
+min(math_scores)
+max(math_scores)
+```
+
+All in one function:
+
+```{r}
+summary(math_scores)
+```
+
+Vectorized operations:
+```{r}
+math_scores > 80
+math_scores + reading_scores
+```
+
+### Data frames
+
+```{r}
+df <- data.frame("math" = math_scores, "reading" = reading_scores)
+```
+
+Access variables:
+```{r}
+df$math
+df$math[1:3]
+df$math[-(1:5)] # note parentheses!
+```
+
+Access rows and columns. DF internally is a matrix
+```{r}
+df[1,]
+df[,1]
+```
+
+Subset data frame in same way as vectors
+```{r}
+df[1:5,]
+df[df$math > 85, ]
+```
+
+Identify the maximum
+```{r}
+best_student <- which.max(df$math)
+df[best_student, ]
+```
+
+### Working with a data frame
+
+```{r}
+df <- read.csv("humansofnewyork.csv")
+```
+
+`View(df)`
+
+```{r}
+str(df)
+```
+
+
+```{r}
+head(df)
+head(df, n=1)
+tail(df)
+
+```
+
+```{r}
+df$message[100]
+df[100,]
+mean(df$likes_count)
+max(df$likes_count)
+```
+
+```{r}
+which(df$likes_count==3384088)
+```
+
+```{r}
+df[1263,]
+```
+
+```{r}
+df[which(df$likes_count==max(df$likes_count)),]
+```
