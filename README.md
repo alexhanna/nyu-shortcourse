@@ -16,9 +16,9 @@
 
 ## Teaching Assistants
 
-Denis Stukal
-Kevin Munger
-Peter Crosta
+Denis Stukal  
+Kevin Munger  
+Peter Crosta  
 Varun D N
 
 ## Description
