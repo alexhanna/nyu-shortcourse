@@ -1,0 +1,148 @@
+---
+title: "Scraping table data"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+### Scraping web data in table format
+
+We will start by loading the `rvest` package, which will help us scrape data from the web.
+
+```{r, message=FALSE}
+#install.packages("rvest")
+library(rvest)
+```
+
+The goal of this exercise is to scrape the population data from the Census website, and then clean it so that we can generate a population pyramid.
+
+The first step is to read the html code from the website we want to scrape, using the `read_html()` function. If we want to see the html in text format, we can then use `html_text()`.
+
+```{r}
+url <- paste("http://www.census.gov/population/international/data/idb/",
+	"region.php?N=%20Results%20&T=10&A=separate&RT=0&Y=2016&R=-1&C=US",
+	sep="")
+html <- read_html(url) # reading the html code into memory
+html # not very informative
+substr(html_text(html), 1, 1000) # first 1000 characters
+```
+
+To extract all the tables in the html code automatically, we use `html_table()`. Note that it returns a list of data frames, so in order to work with this dataset, we will have to subset the first element of this list.
+
+```{r}
+tab <- html_table(html)
+str(tab)
+pop <- tab[[1]]
+```
+
+Now let's clean the data so that we can use it for our analysis. First, I'll remove the row with the totals. (Note that I could just do `pop[-1,]`, but imagine that we run this code again one year from now and the format has changed. The approach below is more robust to such changes.)
+
+```{r}
+pop <- pop[-which(pop$Age=="Total"),]
+```
+
+Let's also change the variable names so that they're easier to work with. (R doesn't like variable names with spaces.)
+
+```{r}
+names(pop)[which(names(pop)=="Male Population")] <- "Male"
+names(pop)[which(names(pop)=="Female Population")] <- "Female"
+```
+
+Finally, the other problem we need to fix is to convert the population values into a numeric format, which requires deleting the commas.
+
+```{r}
+pop$Male <- as.numeric(gsub(",", "", pop$Male))
+pop$Female <- as.numeric(gsub(",", "", pop$Female))
+```
+
+The data is now clean, but we need to convert it to _long_ format if we want to use ggplot2 to generate the population pyramid. The following two approaches are equivalent:
+
+```{r}
+df <- data.frame(
+	Age = rep(pop$Age, 2),
+	value = c(pop$Male, pop$Female),
+	Gender = rep(c("Male", "Female"), each=nrow(pop)))
+head(df)
+
+# using melt() from the reshape package
+library(reshape)
+df <- melt(pop, 
+	id.vars="Age", measure.vars=c("Male", "Female"),
+	variable_name = "Gender")
+```
+
+Finally, we need to make the population value negative for one of the two gender categories so that the population pyramid is properly displayed, and also convert the age variable into a factor so that the ordering of the categories is not alphabetical (default with ggplot2).
+
+```{r}
+df$value[df$Gender=="Male"] <- -df$value[df$Gender=="Male"]
+df$Age <- factor(df$Age, levels=pop$Age)
+```
+
+Now we're ready to generate the population pyramid figure!
+
+```{r, warning=FALSE}
+library(ggplot2)
+p <- ggplot(df, aes(x=Age, y=value, fill=Gender))
+pq <- p + geom_bar(data=df[df$Gender=="Male",], stat="identity") + 
+	geom_bar(data=df[df$Gender=="Female",], stat="identity") + 	
+	coord_flip() + theme_minimal() +
+	theme(axis.title.x=element_blank(), axis.text.x=element_blank())
+pq
+```
+
+
+### Scraping web data in table format: a more involved example
+
+When there are multiple tables on the website, scraping them becomes a bit more complicated. Let's work through a common case scenario: scraping a table from Wikipedia with a list of the most populated cities in the United States.
+
+```{r}
+url <- 'https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population'
+html <- read_html(url)
+tables <- html_table(html, fill=TRUE)
+length(tables)
+```
+
+The function now returns 64 different tables. I had to use the option `fill=TRUE` because some of the tables appear to have incomplete rows.
+
+In this case, identifying the part of the html code that contains the table is a better approach. To do so, let's take a look at the source code of the website. In Google Chrome, go to _View_ > _Developer_ > _View Source_. All browsers should have similar options to view the source code of a website.
+
+In the source code, search for the text of the page (e.g. _2014 rank_). Right above it you will see: `<table class="wikitable sortable" style="text-align:center">`. This is the CSS selector that contains the table. (You can also find this information by right-clicking anywhere on the table, and choosing _Inspect_).
+
+Now that we now what we're looking for, let's use `html_nodes()` to identify all the elements of the page that have that CSS class. (Note that we need to use a dot before the name of the class to indicate it's CSS.)
+
+```{r}
+wiki <- html_nodes(html, '.wikitable')
+length(wiki)
+```
+
+There are 6 tables in total, and we will extract the first one.
+```{r}
+pop <- html_table(wiki[[1]])
+str(pop)
+```
+
+As in the previous case, we still need to clean the data before we can use it. For this particular example, let's see if this dataset provides evidence in support of [Zipf's law for population ranks](https://en.wikipedia.org/wiki/Zipf%27s_law).
+
+We'll use regular expressions to remove endnotes and commas in the population numbers, and clean the variable names.
+
+```{r}
+pop$City <- gsub('\\[.*\\]', '', pop$City)
+pop$population <- as.numeric(gsub(",", "", pop[,"2014 estimate"]))
+pop$rank <- pop[,"2014 rank"]
+head(pop[,c("City", "population", "rank")])
+```
+
+Now we're ready to generate the figure:
+
+```{r}
+library(ggplot2)
+p <- ggplot(pop, aes(x=rank, y=population, label=City))
+pq <- p + geom_point() + geom_text(hjust=-.1, size=3) +
+	scale_x_log10() + scale_y_log10()
+pq
+```
+
+We can also check if this distribution follows Zipf's law estimating a log-log regression.
+```{r}
+lm(log(rank) ~ log(population), data=pop)
+```

@@ -1,0 +1,74 @@
+---
+title: "Challenge 1"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+The purpose of this challenge is to analyze the Twitter network of the Members of the U.S. Congress.
+
+In the `sna` folder of the GitHub repository, you will find two data files:
+
+- `congress-twitter-network-edges.csv` contains the edges of this network. Note that unlike in the previous example, these nodes are now directed: they indicate whether the legislator in the `source` column follows the legislator in the `target` column.
+- `congress-twitter-network-nodes.csv` contains information about each of the nodes. The only important variables you need to use for this challenge are: `id_str` (the unique Twitter ID for each legislator; same as in the edge list), `name` (full name of each legislator), `party` (Republican, Democrat or Independent), and `chamber` (`rep` for the House of Representatives, `sen` for the Senate).
+
+The first step will be to read these two datasets into R and construct the igrahp object. 
+
+```{r}
+...
+```
+
+
+
+
+Then, using the code we have used in the first part of the session, you should be able to extract the relevant information from the first page. Note that there are multiple pages, so we want to save the data into a list that we can populate later.
+
+```{r}
+## EXTRACT DATA ##
+...
+dataset <- list()
+dataset[[1]] <- df # where df is the data frame you just scraped
+```
+
+Now, learn the structure of the URLs so that you can loop over each page
+
+```{r}
+for (i in 2:15){
+  ...
+  
+  dataset[[i]] <- df
+}
+```
+
+The final step is to collapse the list of data frames into a single data frame.
+
+```{r}
+...
+```
+
+Now, write code to answer the following questions:
+
+1. What were the most common reasons or problems that led to product recalls?
+
+```{r}
+
+```
+
+2. What is the company that got the most products recalled?
+
+```{r}
+
+```
+
+3. What is the main reason for product recalls in the company with the most recalls?
+
+```{r}
+
+```
+
+4. How many products were recalled each month?
+
+```{r}
+
+```
+

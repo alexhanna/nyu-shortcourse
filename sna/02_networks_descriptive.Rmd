@@ -1,0 +1,117 @@
+---
+title: "Social network analysis with R: node and network properties"
+author: "Pablo Barbera"
+date: "January 21, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE, message=FALSE}
+library(igraph)
+edges <- read.csv("star-wars-network-edges.csv")
+nodes <- read.csv("star-wars-network-nodes.csv")
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+```
+
+#### Node properties
+
+```{r}
+sort(degree(g))
+```
+In directed graphs, indegree and outdegree, with `mode="in"` or `mode="out"`
+
+```{r}
+sort(strength(g))
+```
+
+Measures of centrality/importance
+```{r}
+sort(betweenness(g))
+```
+
+```{r}
+sort(eigen_centrality(g)$vector)
+```
+
+```{r}
+sort(closeness(g))
+```
+
+```{r}
+sort(page_rank(g)$vector)
+```
+
+```{r}
+sort(authority_score(g)$vector)
+```
+
+```{r}
+neighbors(g, v=which(V(g)$name=="DARTH VADER"))
+ego(g, order=2, nodes=which(V(g)$name=="DARTH VADER"))
+```
+
+#### Network properties
+
+Size of the network
+```{r}
+diameter(g)
+get_diameter(g)
+mean_distance(g)
+distances(g)
+```
+
+Density
+```{r}
+edge_density(g)
+```
+
+Reciprocity (only for directed graphs)
+```{r}
+reciprocity(g)
+```
+
+Transitivity or clustering coefficient
+```{r}
+transitivity(g)
+```
+
+#### Network communities
+
+Connected components
+```{r}
+components(g)
+giant <- decompose(g)[[1]]
+```
+
+Community detection
+```{r}
+cluster_walktrap(g)
+# Others
+cluster_edge_betweenness(g)
+#cluster_fast_greedy(g)
+cluster_infomap(g)
+cluster_label_prop(g)
+```
+
+Plotting communities
+```{r}
+comm <- cluster_walktrap(giant)
+modularity(comm)
+par(mar=c(0,0,0,0)); plot(comm, giant)
+V(giant)$color <- membership(comm)
+par(mar=c(0,0,0,0)); plot(giant)
+```
+
+K-core decomposition
+```{r, fig.height=5, figh.width=6}
+coreness(g)
+V(g)$coreness <- coreness(g)
+par(mfrow=c(2, 3), mar=c(0.1,0.1,1,0.1))
+set.seed(777); fr <- layout_with_fr(g)
+for (k in 1:6){
+  V(g)$color <- ifelse(V(g)$coreness>=k, "orange", "grey")
+  plot(g, main=paste0(k, '-core shell'), layout=fr)
+}
+
+```
+
+
