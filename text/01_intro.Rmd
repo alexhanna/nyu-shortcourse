@@ -101,8 +101,8 @@ That did the trick. Say we want to extract the word that actually refers to the 
 Store the output of `str_extract_all` in a new column called `bully_instance`. 
 
 ```{r}
-str_extract(df.tweets$lower_text, 'bull[a-z]+')
-str_extract_all(df.tweets$lower_text, 'bull[a-z]+')
+head(str_extract(df.tweets$lower_text, 'bull[a-z]+'), 15)
+head(str_extract_all(df.tweets$lower_text, 'bull[a-z]+'), 15)
 df.tweets$bully_instance <- str_extract_all(df.tweets$lower_text, 'bull[a-z]+')
 ```
 
@@ -110,7 +110,7 @@ We can see the instance in context with `dplyr` and the `select` function.
 
 ```{r message = FALSE,}
 library(dplyr)
-head(df.tweets %>% select(text, bully_instance), 15)
+df.tweets[13:15,] %>% select(text, bully_instance)
 ```
 
 What does the function do when there are more than one items extracted?
