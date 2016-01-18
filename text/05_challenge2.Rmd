@@ -1,0 +1,19 @@
+---
+title: "Challenge 1"
+author: Alex Hanna
+date: January 21, 2016
+output: html_document
+---
+
+[&laquo; Text Analysis Module](../text/README.md)
+
+Write commands that help you answer the following questions about the bullying dataset.
+
+1. What are the most popular words in the bullying dataset, other than bullying words?
+```{r}
+```
+
+2. Create a wordcloud comparison between bullying tweets and non-bullying tweets.
+```{r}
+```
+

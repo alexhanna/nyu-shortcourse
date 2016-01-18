@@ -1,0 +1,151 @@
+---
+title: "Text Preprocessing"
+author: Alex Hanna
+date: January 21, 2016
+output: html_document
+---
+
+[&laquo; Text Analysis Module](../text/README.md)
+
+Now that we have used some basics of string handling in R, we need to know how to handle text for large-scale datasets. For that, text needs to go through several "preprocessing" steps before it can be passed to a statistical model.
+
+In this section, we will cover several procedures, including casing, stopword removal, stemming, and vectorization.
+
+We will be using the `tm` package. You can look at further documentation [here](https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf). This is not the only package for handling large-scale text. Notably, Kenneth Benoit and colleagues (including Pablo!) have developed a package called [quanteda](https://github.com/kbenoit/quanteda) for processing poliical texts.
+
+The basic unit of work for the `tm` package is called a `Corpus`, which represents a collection of text documents with some associated metadata. Documents are the subunits of a corpus. A specific instantiation of this is called a `VCorpus`, which is the type we will use most often in this section.
+
+```{r message = FALSE}
+library(tm)
+docs   <- c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.')
+corpus <- VCorpus(VectorSource(docs))
+```
+
+`inspect` gives us summaries of the content of the corpus. We can also type of the name of the corpus and look at specific entries with `as.character`.
+
+```{r}
+inspect(corpus)
+corpus
+as.character(corpus[[1]])
+```
+
+The power of using `tm` comes from the ability to apply many different processing operations to every document in the corpus at once. We can do this with the `tm_map` package. For instance, we can apply `tolower` and make all documents lowercased.
+
+```{r}
+corpus <- tm_map(corpus, content_transformer(tolower))
+as.character(corpus[[1]])
+```
+
+We can also remove words and symbols which are not of interest to our data. One class of words which is not relevant are called _stopwords_. These are words which are common connectors in a given language (e.g. "a", "the", "is"). Another is punctuation. 
+
+```{r}
+stopwords("english")
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, removePunctuation)
+as.character(corpus[[2]])
+```
+
+We have a lot of spaces left over from all the words which have gone missing. Spaces, line breaks, and tabs are collectively known as _whitespace_ characters. While whitespace is definitely important between words, it probably serves no function at the beginning and end of a document. We can get compress multiple whitespace characters down to a single space with `stripWhitespace`.
+
+```{r}
+corpus <- tm_map(corpus, stripWhitespace)
+as.character(corpus[[2]])
+```
+
+One final text transformation is called _stemming_. Stemming is the process of reducing a set of words with a common root (e.g. "consistent", "consisting", "consists") to that common root ("consist").
+
+```{r}
+corpus <- tm_map(corpus, stemDocument)
+as.character(corpus[[2]])
+```
+
+With these pre-processing operations, we can start explore some of the content of the messages. `tm` works on the `TermDocumentMatrix` and `DocumentTermMatrix` objects. As you may have guessed by the name, these objects are transposes of each other. These matrices are the building blocks of quantitative text analysis because they are the fundamental way we get from words to numbers. 
+
+```{r}
+tdm <- DocumentTermMatrix(corpus)
+tdm
+inspect(tdm)
+```
+
+After all the pre-processing, there are not a lot of terms to work with -- 6 across 3 documents. Let's use the Humans of New York Facebook data from the first day. We'll save the bullying data for the final exercise.
+
+```{r}
+df.hony  <- read.csv("../intro/humansofnewyork.csv", stringsAsFactors = FALSE, header = TRUE) 
+hony     <- VCorpus(VectorSource(df.hony$message))
+hony     <- tm_map(hony, content_transformer(tolower))
+hony     <- tm_map(hony, removeWords, stopwords("english"))
+hony     <- tm_map(hony, removePunctuation)
+hony     <- tm_map(hony, stripWhitespace)
+hony     <- tm_map(hony, stemDocument)
+tdm.hony <- TermDocumentMatrix(hony)
+tdm.hony
+```
+
+This is much more interesting with documents and terms in the thousands. An brief explanation of the output from typing the name of the `TermDocumentMatrix`:
+
+* `Non-/sparse entries` is the number of non-zero values in the matrix versus the number of zero values. 
+* `Sparsity` is the (rounded) percentage of non-zero values. The actual value of this is around 99.8%.
+* `Maximal term length` is the length of the longest word.
+* `Weighting` is an explanation of the value in the matrix. In this case, it is just the number of times a term appears in a document. But we will discuss weighting in more detail below.
+
+We can look at subsections of documents and terms with `inspect` and using R range notation. 
+
+```{r}
+inspect(tdm.hony[750:760, 0:10])
+```
+
+This matrix is large and by itself it is largely uninformative. But it now allows us to quantify the text in new ways. We can find the most frequent terms of the dataset using `findFreqTerms`. We will look for terms which appear at least 250 times.
+
+```{r}
+findFreqTerms(tdm.hony, 250)
+```
+
+Using the `wordcloud` package, we can visualize the most frequent words in the dataset.
+
+```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
+library(wordcloud)
+m  <- as.matrix(tdm.hony)
+v  <- sort(rowSums(m), decreasing=TRUE)
+df <- data.frame(word = names(v), freq=v)
+
+wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 250, colors=brewer.pal(8, "Dark2"))
+```
+
+The top terms in the wordcloud are pretty common: "one", "just", "like", "time", "get", "peopl". It does not seem to tell us much about the uniqueness of this dataset.
+
+One way to get around that is to revisit the weighting scheme we used for the `TermDocumentMatrix`. We initially used the term frequency for each document. But a popular alternative weighting scheme is called [term frequency - inverse document frequency, or tf-idf](https://en.wikipedia.org/wiki/Tf%E2%80%93idf). The intuition behind tf-idf is that it reflects how important a word is to a particular document but is normalized by the number of times a word appears in a corpus. So words like "one" or "just" will not appear that prominently.
+
+We can generate the wordcloud again using the tf-idf weighting.
+
+```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
+m  <- as.matrix(weightTfIdf(tdm.hony))
+v  <- sort(rowSums(m), decreasing=TRUE)
+df <- data.frame(word = names(v), freq=v)
+
+wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 250, colors=brewer.pal(8, "Dark2"))
+```
+
+This plot is a little more varied. Although the most common word is "seen", we also see "microfashion" and "today" as in the most popular words. We also see a lot of words which have low values (those in teal) to start to fall away and lose significance.
+
+As a final exercise in this section, we will have a look at comparing the wordclouds of two groups. To do that, we can split the Facebook posts in the two groups: those which have a number of likes above the median level of likes, and those which have them below that level. We then concatenate them into two large documents. We will skip removing stopwords and stemming due to processing time.
+
+```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
+df.hony.less_liked <- df.hony[df.hony$likes_count <  median(df.hony$likes_count),]
+df.hony.more_liked <- df.hony[df.hony$likes_count >= median(df.hony$likes_count),]
+docs.less_liked    <- paste(df.hony.less_liked$message, collapse = " ")
+docs.more_liked    <- paste(df.hony.more_liked$message, collapse = " ")
+hony.groups        <- VCorpus(VectorSource(c("Less" = docs.less_liked, "More" = docs.more_liked)))
+hony.groups        <- tm_map(hony.groups, content_transformer(tolower))
+hony.groups        <- tm_map(hony.groups, removePunctuation)
+hony.groups        <- tm_map(hony.groups, stripWhitespace)
+tdm.hony.groups    <- TermDocumentMatrix(hony.groups)
+
+## Label the two groups
+tdm.hony.groups$dimnames$Docs = c("Less Liked", "More Liked")
+
+## Display the two word clouds
+comparison.cloud(as.matrix(weightTfIdf(tdm.hony.groups)))
+```
+
+What seems to be different about the two of these wordclouds? What is the general subject matter of them?
+

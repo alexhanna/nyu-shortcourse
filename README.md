@@ -9,15 +9,14 @@
  
 ## Instructors
 
-* [Alex Hanna](http://alex-hanna.com)
 * [Pablo Barber&aacute;](http://pablobarbera.com/)
 
 ## Teaching Assistants
 
-Denis Stukal
-Kevin Munger
-Peter Crosta
-Varun D N
+* Denis Stukal
+* Kevin Munger
+* Peter Crosta
+* Varun D N
 
 ## Description
 
@@ -39,7 +38,6 @@ You have three options for downloading the course material found on this page:
 
 You can also subscribe to the repository if you have [a GitHub account](https://github.com), which will send you updates each time new changes are pushed to the repository.
 
-<a name="schedule"></a>
 ## Schedule
 
 
