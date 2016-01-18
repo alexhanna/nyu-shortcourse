@@ -1,0 +1,132 @@
+---
+title: "Introduction to social network analysis with R"
+author: "Pablo Barbera"
+date: "January 21, 2016"
+output: html_document
+---
+
+#### Importing network data into R
+
+Reading list of edges and node information
+
+```{r}
+edges <- read.csv("star-wars-network-edges.csv")
+head(edges)
+nodes <- read.csv("star-wars-network-nodes.csv")
+head(nodes)
+```
+
+Creating igraph object
+
+```{r, message=FALSE}
+library(igraph)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=FALSE)
+g
+```
+
+What does it mean?
+- `U` means undirected  
+- `N` means named graph  
+- `W` means weighted graph  
+- `22` is the number of nodes  
+- `61` is the number of edges  
+- `name (v/c)` means _name_ is a node attribute and it's a character  
+- `weight (e/n)` means _weight_ is an edge attribute and it's numeric  
+
+Access specific elements within the igraph object
+
+```{r}
+V(g) # nodes
+V(g)$name # names of each node
+vertex_attr(g) # all attributes of the nodes
+E(g) # edges
+E(g)$weight # weights for each edge
+edge_attr(g) # all attributes of the edges
+g[] # adjacency matrix
+g[1,] # first row of adjacency matrix
+```
+
+#### Network visualization
+
+How can we visualize this network? The `plot()` function works out of the box, but the default options often are not ideal
+
+```{r}
+par(mar=c(0,0,0,0))
+plot(g)
+```
+
+`?igraph.plotting` 
+Changing general plotting options
+
+```{r}
+par(mar=c(0,0,0,0))
+plot(g,
+     vertex.color = "grey",
+     vertex.label.color = "black",
+     vertex.label.cex = .75,
+     edge.curved=.25,
+     edge.color="grey20")
+```
+
+Modifying igraph object to add plotting attributes
+
+```{r}
+V(g)$size <- log(strength(g)) * 4 + 3
+par(mar=c(0,0,0,0)); plot(g)
+
+V(g)$label <- ifelse( V(g)$size>12, V(g)$name, NA)
+par(mar=c(0,0,0,0)); plot(g)
+
+dark_side <- c("DARTH VADER", "MOTTI", "TARKIN")
+light_side <- c("R2-D2", "CHEWBACCA", "C-3PO", "LUKE", "CAMIE", "BIGGS",
+                "LEIA", "BERU", "OWEN", "OBI-WAN", "HAN", "DODONNA",
+                "GOLD LEADER", "WEDGE", "RED LEADER", "RED TEN", "GOLD FIVE")
+other <- c("GREEDO", "JABBA")
+V(g)$color <- NA
+V(g)$color[V(g)$name %in% dark_side] <- "red"
+V(g)$color[V(g)$name %in% light_side] <- "gold"
+V(g)$color[V(g)$name %in% other] <- "grey20"
+vertex_attr(g)
+par(mar=c(0,0,0,0)); plot(g)
+
+
+E(g)$width <- log(E(g)$weight) + 1
+edge_attr(g)
+par(mar=c(0,0,0,0)); plot(g)
+
+```
+
+Adding a legend
+
+```{r}
+par(mar=c(0,0,0,0)); plot(g)
+legend(x=.75, y=.75, legend=c("Dark side", "Light side", "Other"), 
+       pch=21, pt.bg=c("red", "gold", "grey20"), pt.cex=2, bty="n")
+
+```
+
+Layouts.
+
+```{r}
+par(mfrow=c(2, 3), mar=c(0,0,1,0))
+plot(g, layout=layout_randomly, main="Random")
+plot(g, layout=layout_in_circle, main="Circle")
+plot(g, layout=layout_as_star, main="Star")
+plot(g, layout=layout_as_tree, main="Tree")
+plot(g, layout=layout_on_grid, main="Grid")
+plot(g, layout=layout_with_fr, main="Force-directed")
+```
+
+```{r}
+l <- layout_randomly(g)
+str(l)
+```
+
+[Force-directed layouts](https://en.wikipedia.org/wiki/Force-directed_graph_drawing) , such as Fruchterman-Reingold, try to position the nodes so that the edges have similar length and there are as few crossing edges as possible. In the resulting layout, nodes that are closers to each other share more connections in common that those that are located further apart.
+
+```{r}
+set.seed(777)
+fr <- layout_with_fr(g, niter=1000)
+par(mar=c(0,0,0,0)); plot(g, layout=fr)
+```
+
