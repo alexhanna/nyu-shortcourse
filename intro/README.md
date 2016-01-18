@@ -1,5 +1,16 @@
 # Module 1: Intro to R and Data Munging
 
+- Intro to R and R Markdown (10 minutes)
+- R operations and data types (10 minutes)
+- Reading in data, manipulating and munging.
+- Exploring functions and help.
+- Exercise 1 (3o min)
+- If, loops, custom functions
+- environments, sourcing
+
+- Exercise 1: reading data into R, generating some summaries, creating some variables, fill in missing variables, summarize some text data, etc.
+
+
 - [RMarkdown setup](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/intro/00_setup.html) (10 minutes)
 - [First steps with R](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/intro/01_first_steps.html) (15 minutes)
 - Introduction to data analysis with R: subsetting vectors, basic statistical functions, data frames (15 minutes)
@@ -14,4 +25,37 @@ RESOURCES:
 - Software carpentry workshops
 - Springer R beginner
 - R programming...
+
+Don't worry about remembering all of these function names and options. You can always google them or use ?? to search functions (e.g. try searching `??histogram`). RStudio has also has an autocompletion function (e.g. try typing `matrix()` in the console and then press `TAB`). If you hover the cursor on the options that appear, you will have more information about what each of them mean.
+
+#### Installing and loading packages
+
+There are many packages that expand the basic functionalities of R. For example, imagine that we want to make a map of the U.S. The package "maps" is exactly what we're looking for.
+
+First, we install it (you only need to do this once) typing the following:
+
+```{r, echo=FALSE}
+install.packages("maps", repos = "http://cran.rstudio.com/")
+```
+
+Alternatively:
+1) Go to the "Packages" tab on the bottom right panel
+2) Click on "Install Packages"
+3) Type "maps" and click on "Install"
+
+Now, we load the package, which will make all the functions in this package available for you to use. You only need to load the packages once per session.
+
+```{r}
+library(maps)
+```
+
+You can use the "map" function to  draw a map of the US. Note that you need to specify the option 'database="state"'
+
+```{r}
+map(database="state")
+```
+
+You can uninstall a package with `remove.packages()` and update it with `update.packages()`, but in practice these are rarely used.
+
+
 

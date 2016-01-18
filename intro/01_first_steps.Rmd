@@ -1,6 +1,6 @@
 ---
 title: "First steps in R"
-author: "Pablo Barbera"
+author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document
 ---
@@ -21,11 +21,11 @@ exp(1)
 What makes R very powerful is that you can store results as "objects"
 
 ```{r}
-x = 5
-y = 10
+x <- 5
+y <- 10
 ```
 
-If you look at the `Environment` panel on the top right, you can see that these numbers are stored in memory.
+If you look at the `Environment` panel in your RStudio session, you can see that these numbers are stored in memory.
 
 Then you can do operations with them, the same way you would do with numbers:
 
@@ -45,14 +45,14 @@ You can also modify existing objects.
 x <- x + 1
 ```
 
-Note the `<-` sign. That's the assignment operator. You can also use `=`, although `<-` is generally preferred. There's a more technical explanation for this preference, but another is that this way you avoid getting confused with `==`, which is used to compare objects:
+Note that we've used the `<-` sign to assign values to objects. That's the *assignment* operator. You can also use `=`, although `<-` is generally preferred. There's a more technical explanation for this preference, but another is that this way you avoid getting confused with `==`, which is used to compare objects:
 
 ```{r}
 2 == 2
 c(1, 2, 3) == 2
 ```
 
-Other logical operators are:
+`==` is a *logical operator*, meaning it outputs `TRUE` or `FALSE`. Other logical operators are:
 
 ```{r}
 1 != 2 # not equal to
@@ -66,13 +66,13 @@ Other logical operators are:
 
 ### Data types
 
-R has five basic data types:
+R has many data types, but the most common one we'll use are:
 
 1. numeric: `1.1`, `3`, `317`, `Inf`...
 2. logical: `TRUE` or `FALSE`
 3. character: `this is a character`, `hello world!`...
-4. integer: `1L`, `10L`... (rarely used)
-5. complex: `1i + 2`... (rarely used)
+4. factor: `Democrat`, `Republican`, `Socialist`, ...
+
 
 A small trick regarding logical values is that they correspond to `1` and `0`. This will come in hand to count the number of `TRUE` values in a vector.
 
@@ -85,23 +85,25 @@ sum(x)
 There are a few special values: `NA`, which denotes a missing value, and `NaN`, which means Not a number. The values `Inf` and `-Inf` are considered numeric. `NULL` denotes a value that is undefined.
 
 ```{r}
-0/0 # NaN
+0 / 0 # NaN
+1 / 0 # Inf
 x <- c(1, NA, 0)
 ```
 
-You can find out the data type for each object in R using functions that start with `is.` and then the data type:
+You can find out the data type for each object in `R` using the function `class`, or functions that start with `is.` and then the data type:
 
 ```{r}
+class("hello world!")
 is.numeric("hello world!")
 is.character("hello world")
-is.na("hello world")
-is.na(c(1, NA, 0))
+class(c(1, NA, 0))
+is.numeric(c(1, NA, 0))
 ```
 
 Probably one of the most useful functions in R is `str`. It displays the internal structure of an object.
 
 ```{r}
-str(x)
+str(as.factor(c("Blue", "Blue", "Red")))
 ```
 
 Of course you can always print the object in the console:
@@ -118,75 +120,83 @@ This is equivalent to just typing the name of the object in the console. (What's
 z
 ```
 
+### Data structures
+
+Building off of the data types we've learned, *data structures* combine multiple values into a single object. Some common data structures in `R` include:
+
+1. vectors: sequence of values of a certain type
+2. data frame: a table of vectors, all of the same length
+3. list: collection of objects of different types
+
 #### Vectors
 
-There are different types of data structures in R. (A data structure combines multiple values.) Vectors are the most common type. They can only contain values of one type (e.g. only numeric values, or only characters). 
+We've already seen vectors created by *c*ombining multiple values with the `c` command:
 
 ```{r}
-math_scores = c(80, 75, 91, 67, 56)
+student_names <- c("Bill", "Jane", "Sarah", "Fred", "Paul")
+math_scores <- c(80, 75, 91, 67, 56)
+verbal_scores <- c(72, 90, 99, 60, 68)
 ```
 
-Note the use of the `c` (concatenate) function to put all 5 numbers together.
-For example, this vector contains the scores of five students in a math test.
+There are shortcuts for creating vectors with certain structures, for instance:
 
 ```{r}
-print(math_scores)
+nums1 <- 1:100
+nums2 <- seq(-10, 100, by=5) # -10, -5, 0, ..., 100
+nums3 <- seq(-10, 100, length.out=467) # 467 equally spaced numbers between -10 and 100
 ```
 
-To visualize the relationship between the two variables, you can use the `plot` function
+Notice that we used `seq` to generate both `nums1` and `nums2`. The different behavior is controlled by which arguments (e.g. `by`, `length.out`) are supplied to the function `seq`---we'll discuss this in more detail later.
+
+With vectors we can carry out some of the most fundamental tasks in data analysis, such as descriptive statistics
 
 ```{r}
-reading_scores = c(80, 61, 74, 58, 67)
-plot(x=math_scores, y=reading_scores)
+mean(math_scores)
+min(math_scores - verbal_scores)
+summary(verbal_scores)
 ```
 
-`plot` is a function just like `print`, but it takes multiple arguments. First, you specify the variable you want in the x-axis: `x=math_scores`. Then, the one on the y-axis: `y=reading_scores`.
-
-#### Finding help
-
-Now imagine that you want to add a title to your plot, but don't know how. You can use the help page for `plot`:
+and plots.
 
 ```{r}
-?plot
+plot(math_scores, verbal_scores)
+text(math_scores, verbal_scores, student_names)
 ```
 
-And find that "main" is the option you're looking for
+
+#### Data frames
+
+Data frames allow us to combine many vectors of the same length into a single object.
 
 ```{r}
-plot(x=math_scores, y=reading_scores, main="Relationship between math and reading scores")
+students <- data.frame(student_names, math_scores, verbal_scores)
+students
+summary(students)
 ```
 
-This is just a basic plot -- we will cover more advanced examples this afternoon
-
-Don't worry about remembering all of these function names and options. You can always google them or use ?? to search functions (e.g. try searching `??histogram`). RStudio has also has an autocompletion function (e.g. try typing `matrix()` in the console and then press `TAB`). If you hover the cursor on the options that appear, you will have more information about what each of them mean.
-
-#### Installing and loading packages
-
-There are many packages that expand the basic functionalities of R. For example, imagine that we want to make a map of the U.S. The package "maps" is exactly what we're looking for.
-
-First, we install it (you only need to do this once) typing the following:
-
-```{r, echo=FALSE}
-install.packages("maps", repos = "http://cran.rstudio.com/")
-```
-
-Alternatively:
-1) Go to the "Packages" tab on the bottom right panel
-2) Click on "Install Packages"
-3) Type "maps" and click on "Install"
-
-Now, we load the package, which will make all the functions in this package available for you to use. You only need to load the packages once per session.
+Notice that `student_names` is a different class (character) than `math_scores` (numeric), yet a data frame combines their values into a single object. We can also create data frames that include new variables:
 
 ```{r}
-library(maps)
+students <- data.frame(students, final_scores = (math_scores + verbal_scores) / 2)
+students
 ```
 
-You can use the "map" function to  draw a map of the US. Note that you need to specify the option 'database="state"'
+#### Lists
+
+Lists are an even more flexible way of combining multiple objects into a single object. Using lists, we can combine together vectors of different lengths:
 
 ```{r}
-map(database="state")
+list1 <- list(some_numbers = 1:10, some_letters = c("a", "b", "c"))
+list1
 ```
 
-You can uninstall a package with `remove.packages()` and update it with `update.packages()`, but in practice these are rarely used.
+or even vectors and data frames, or multiple data frames:
+
+```{r}
+school_info <- list(school_name = "NYU", students = students, 
+                    faculty = data.frame(name = c("Kelly Jones", "Matt Smith"), 
+                                         age = c(41, 55)))
+school_info
+```
 
 
