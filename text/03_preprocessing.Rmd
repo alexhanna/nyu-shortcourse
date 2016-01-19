@@ -24,6 +24,7 @@ corpus <- VCorpus(VectorSource(docs))
 
 `inspect` gives us summaries of the content of the corpus. We can also type the name of the corpus and look at specific entries with `as.character`.
 
+
 ```{r}
 inspect(corpus)
 corpus
@@ -80,8 +81,10 @@ hony     <- tm_map(hony, removeWords, stopwords("english"))
 hony     <- tm_map(hony, removePunctuation)
 hony     <- tm_map(hony, stripWhitespace)
 hony     <- tm_map(hony, stemDocument)
+
 dtm.hony <- DocumentTermMatrix(hony)
 dtm.hony
+
 ```
 
 This is much more interesting with documents and terms in the thousands. An brief explanation of the output from typing the name of the `TermDocumentMatrix`:
@@ -113,6 +116,7 @@ v  <- sort(colSums(m), decreasing=TRUE) # extract word counts
 df <- data.frame(word = names(v), freq=v) # table with word frequencies
 
 wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 100, colors=brewer.pal(8, "Dark2"))
+
 ```
 
 The top terms in the wordcloud are pretty common: "one", "just", "like", "time", "get", "peopl". It does not seem to tell us much about the uniqueness of this dataset.
@@ -127,6 +131,7 @@ v  <- sort(colSums(m), decreasing=TRUE)
 df <- data.frame(word = names(v), freq=v)
 
 wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 100, colors=brewer.pal(8, "Dark2"))
+
 ```
 
 This plot is a little more varied. Although the most common word is "seen", we also see "microfashion" and "today" as in the most popular words. We also see a lot of words which have low values (those in teal) to start to fall away and lose significance.

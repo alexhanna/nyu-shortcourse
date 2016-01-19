@@ -40,6 +40,7 @@ Write commands that help you answer the following questions about the bullying d
 ```
 
 7. Display the first 15 tweets which mention "mom" and "dad". Note any peculiar findings.
+
 ```{r}
 
 ```

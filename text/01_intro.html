@@ -135,7 +135,7 @@ str(df.tweets)</code></pre>
 ## [4] &quot;:O Celebrities open up about their bullying experiences in new book Dont Peak at High School HTTPLINK scabies&quot;      
 ## [5] &quot;@USER Y me trata de \&quot;feli\&quot; por internet, esto es cyber bullying! ( @USER @USER )&quot;                                 
 ## [6] &quot;O que o @USER faz comigo é bullying! Tsc. Kkkkkk&quot;</code></pre>
-<p>The text has gone some preprocessing for anonyminity – <span class="citation">@usernames</span> have been replaced with <span class="citation">@USERNAME</span> and links starting with <code>http</code> have been replaced by HTTPLINK.</p>
+<p>The text has gone some preprocessing for anonyminity – <span class="citation">@usernames</span> have been replaced with <span class="citation">@USER</span> and links starting with <code>http</code> have been replaced by HTTPLINK.</p>
 <p>Now we can start to dig into the text a little bit more. Given the construction of the dataset, we can expect that there will be many instances of the word “bully.” We can use the <code>grep</code> command to identify these. <code>grep</code> returns the index where the word occurs.</p>
 <pre class="r"><code>grep('bully', 'That guy is a buly.')</code></pre>
 <pre><code>## integer(0)</code></pre>
@@ -174,7 +174,19 @@ length(grep('bully', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
 <pre class="r"><code>length(grep('bull[a-z]+', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
-<p>That did the trick. Say we want to extract the word that actually refers to the bullying in the tweet. We can use <code>str_extract</code> and <code>str_extract_all</code> to do that with the regular expression we created later. Using <code>str_extract</code> will only get the first instance, while <code>str_extract_all</code> will get the whole list.</p>
+<p>That did the trick. Now let’s try to identify what tweets are probably not related to bullying. For example, how many tweets mention <code>bullet</code>?</p>
+<pre class="r"><code>nrow(df.tweets)</code></pre>
+<pre><code>## [1] 5022</code></pre>
+<pre class="r"><code>length(grep('bullet', df.tweets$lower_text))</code></pre>
+<pre><code>## [1] 12</code></pre>
+<p>Let’s assume we want to get rid of these. How would we do it? First, let’s create a new column to the data frame that has value <code>TRUE</code> for tweets that mention this keyword and <code>FALSE</code> otherwise. Then, we can keep the rows with value <code>TRUE</code>.</p>
+<pre class="r"><code>df.tweets$bullet &lt;- grepl('bullet', df.tweets$text, ignore.case=TRUE)
+table(df.tweets$bullet)</code></pre>
+<pre><code>## 
+## FALSE  TRUE 
+##  5010    12</code></pre>
+<pre class="r"><code>df.tweets.subset &lt;- df.tweets[df.tweets$bullet==FALSE,]</code></pre>
+<p>Finally, say we want to extract the word that actually refers to the bullying in the tweet. We can use <code>str_extract</code> and <code>str_extract_all</code> to do that with the regular expression we created later. Using <code>str_extract</code> will only get the first instance, while <code>str_extract_all</code> will get the whole list.</p>
 <p>Store the output of <code>str_extract_all</code> in a new column called <code>bully_instance</code>.</p>
 <pre class="r"><code>head(str_extract(df.tweets$lower_text, 'bull[a-z]+'), 15)</code></pre>
 <pre><code>##  [1] &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot;
