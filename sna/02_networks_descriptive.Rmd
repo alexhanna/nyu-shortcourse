@@ -7,34 +7,48 @@ output: html_document
 
 ```{r, echo=FALSE, message=FALSE}
 library(igraph)
-edges <- read.csv("star-wars-network-edges.csv")
-nodes <- read.csv("star-wars-network-nodes.csv")
+edges <- read.csv("data/star-wars-network-edges.csv")
+nodes <- read.csv("data/star-wars-network-nodes.csv")
 g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
 ```
 
 #### Node properties
 
+Measures of centrality/importance
+
+Degree: how well-connected nodes are; a measure of direct influence
+
 ```{r}
 sort(degree(g))
 ```
-In directed graphs, indegree and outdegree, with `mode="in"` or `mode="out"`
+
+In directed graphs, indegree and outdegree, with `mode="in"` or `mode="out"`.
+
+Strength is a weighted measure of degree.
 
 ```{r}
 sort(strength(g))
 ```
 
-Measures of centrality/importance
+Closeness measures how many steps are required to access every other node from a given node; it's a measure of how long information takes to arrive (who hears news first?). Higher values mean less centrality.
+
+```{r}
+sort(closeness(g))
+```
+
+Betweenness measures brokerage or gatekeeping potential. Approximately the number of shortest paths between nodes that pass through a particular node.
+
 ```{r}
 sort(betweenness(g))
 ```
+
+Eigenvector centrality: a measure of being connected to the well-connected. First eigenvector of the graph adjacency matrix. Only works with undirected networks.
 
 ```{r}
 sort(eigen_centrality(g)$vector)
 ```
 
-```{r}
-sort(closeness(g))
-```
+Page rank algorithm: approximates probability that any message would arrive to a particular node. Developed by Google founders, and originally applied to website links.
 
 ```{r}
 sort(page_rank(g)$vector)
@@ -82,7 +96,7 @@ components(g)
 giant <- decompose(g)[[1]]
 ```
 
-Community detection
+Community detection: finding subsets of the network that are more connected to each other than to the rest of the network
 ```{r}
 cluster_walktrap(g)
 # Others
@@ -101,7 +115,7 @@ V(giant)$color <- membership(comm)
 par(mar=c(0,0,0,0)); plot(giant)
 ```
 
-K-core decomposition
+K-core decomposition: core-periphery analysis. A k-core is a maximal group such that all nodes have at least degree K. This techniques informs us about the hierarchy of the network.
 ```{r, fig.height=5, figh.width=6}
 coreness(g)
 V(g)$coreness <- coreness(g)
@@ -114,4 +128,12 @@ for (k in 1:6){
 
 ```
 
+Backbone decomposition: subset of a weighted network that represents the most relevant connections, while maintaning its functionality. Common example: airport networks.
+```{r}
+#install.packages("disparityfilter")
+library(disparityfilter)
+gg <- get.backbone(g)
+plot(gg)
+
+```
 

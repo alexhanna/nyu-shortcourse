@@ -1,0 +1,72 @@
+---
+title: "Social network analysis with R: modeling"
+author: "Pablo Barbera"
+date: "January 21, 2016"
+output: html_document
+---
+
+`ergm` package works with object in `network` format (not `igraph`), so we need to convert first between packages using the `intergraph` package.
+
+```{r, echo=FALSE, message=FALSE}
+nodes <- read.csv("data/congress-twitter-network-nodes.csv")
+edges <- read.csv("data/congress-twitter-network-edges.csv")
+library(igraph)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+g <- decompose(g)[[1]]
+
+library(intergraph)
+library(network)
+net <- asNetwork(g)
+
+```
+
+Edges = number of edges in the network. Similar to a constant. exp(edges) close to observed density.
+Mutual = number of mutual edges in the network. If positive, it means reciprocity is more common than expected. If you see an edge from i to j; then you are exp(mutual) times more likely to see an edge from j to i as well.
+nodematch = probability that an edge between nodes with the same value on this variable exists. exp(nodematch) times more likely for an edge to exist when values match than otherwise.
+
+```{r}
+#install.packages("ergm")
+library(ergm)
+reg1 <- ergm(net ~ edges + mutual)
+summary(reg1) 
+mcmc.diagnostics(reg1)
+```
+
+```{r}
+reg2 <- ergm(net ~ edges + mutual + nodecov("followers_count") + nodefactor("chamber"))
+summary(reg2)
+
+reg3 <- ergm(net ~ edges + nodefactor("chamber") +
+               absdiff("followers_count", pow=1/2) + nodematch("party") + 
+               nodematch("chamber") + nodematch("gender"))
+summary(reg3)
+exp(coef(reg3))
+```
+
+Latent space model for networks
+```{r}
+# install.packages("latentnet")
+library(latentnet)
+lat <- ergmm(net ~ euclidean(d=1), verbose=TRUE, 
+             control=ergmm.control(sample.size = 100, burnin=100, interval = 1))
+
+test <- prcomp(as.matrix(g[])*1)
+
+library(ca)
+res <- ca(as.matrix(g[])*1)
+
+```
+
+
+```{r}
+#install.packages("NetData")
+library(NetData)
+data(studentnets.ergm173)
+edges <- edges[edges$alter_id %in% nodes$std_id,]
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+net <- asNetwork(g)
+
+reg1 <- ergm(net ~ edges + mutual + nodematch("gnd") + nodematch("rce"))
+summary(reg1)
+
+```

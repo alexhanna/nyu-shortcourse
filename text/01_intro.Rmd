@@ -11,7 +11,8 @@ In this section we are going to focus on some basic string manipulation in R. We
 
 R stores the basic string in a character vector. `length` gets the number of items in the vector, while `nchar` is the number of characters in the vector.
 
-```{r results = "hide"}
+```{r}
+library(stringr)
 str1 <- 'This is a string.'
 is.character(str1)
 length(str1)
@@ -20,47 +21,96 @@ nchar(str1)
 
 We can also have multiple strings within one vector. A vector of strings is the most simple kind of data structure for storage.
 
-```{r results = "hide"}
+```{r}
 v_str1 <- c('This is a string.', 'This is also a string.', 'A third one goes here.')
 length(v_str1)
 nchar(v_str1)
 sum(nchar(v_str1))
 ```
 
+The `str_to_*` functions convert case of a string.
+
+```{r}
+str_to_lower("Converting To Lowercase.")
+str_to_upper("Converting To Uppercase.")
+str_to_title("capitalize the first letter of every word.")
+```
+
+We can grab substrings with `substr`. The first argument is the string, the second is the beginning index (starting from 1), and the third is final index.
+
+```{r}
+substr(str1, 11, 16)
+```
+
+We can split up strings by a separator using `strsplit`.
+
+```{r}
+strsplit(str1, " ")
+strsplit(str1, "s ")
+```
+
 It can also be part of a larger data frame of information. For this, load the dataset of tweets from the bullying project. Use `head` to look at the first few lines. 
 
-```{r results = "hide"}
+```{r}
 df.tweets <- read.csv("bullying.csv", header = TRUE, stringsAsFactors = FALSE)
 is.character(df.tweets$text)
 head(df.tweets$text)
 ```
+The text has gone some preprocessing for anonyminity -- @usernames have been replaced with @USERNAME and links starting with `http` have been replaced by HTTPLINK. 
 
 Now we can start to dig into the text a little bit more. Given the construction of the dataset, we can expect that there will be many instances of the word "bully." We can use the `grep` command to identify these. `grep` returns the index where the word occurs.
 
-```{r results = "hide"}
+```{r}
 grep('bully', 'That guy is a buly.')
 grep('bully', 'That guy is a bully. Fixed that for you.')
 grep('bully', c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.'))
 ```
 
 Within the dataset, we can use the results of `grep` to get particular rows. First, check if the number of tweets mentioning "bully" match the total number of rows in the data frame.
-```{r results = "hide"}
+```{r}
 nrow(df.tweets)
 length(grep('bully', df.tweets$text))
 ```
 
-That didn't seem to work. That's because matching is case-sensitive. Use `grepl` to match to a lowercase version.
-```{r results = "hide"}
-length(grepl('bully', df.tweets$text))
+We are not retrieving all of the items within the dataset. One reason is because matching is case-sensitive. You can use the `ignore.case` argument to match to a lowercase version. You can also create a new column in which everything is lowercase with `str_to_lower`.
+
+```{r}
+nrow(df.tweets)
+length(grep('bully', df.tweets$text, ignore.case = TRUE))
+df.tweets$lower_text <- str_to_lower(df.tweets$text)
+length(grep('bully', df.tweets$lower_text))
 ```
 
-<!--
-	1. String vectors
-	2. Basic operations
-		a. grep
-		b. str_to_lower, str_to_upper, str_to_title
-		c. str_match
-		d. substr
-		e. str_replace
+We still are not capturing all the items. We can use what are called "regular expressions" to detect strings in a more robust manner. You can learn more about regular expressions [here](http://www.zytrax.com/tech/web/regex.htm). Regular expressions let us develop complicated rules for both matching strings and extracting elements from them. 
 
--->
+According to the documentation in the bullying project, they collected tweets contains at least one of the following keywords: "bully, bullied, bullying." One of the ways to do this, then, would be to try to match for the word "bull" plus any of the three endings: -y, -ied, -ying.
+
+```{r}
+nrow(df.tweets)
+length(grep('bull(y|ied|ying)', df.tweets$lower_text))
+```
+
+This still doesn't get all the tweets. Let's try the much more inclusive `+` operator. This denotes that we want to match one or more of the previous character. We can use this along with all lowercase letters in the Latin alphabet by denoting a "character class" with brackets. So all lowercase letters would be `[a-z]`.
+
+```{r}
+nrow(df.tweets)
+length(grep('bull[a-z]+', df.tweets$lower_text))
+```
+
+That did the trick. Say we want to extract the word that actually refers to the bullying in the tweet. We can use `str_extract` and `str_extract_all` to do that with the regular expression we created later. Using `str_extract` will only get the first instance, while `str_extract_all` will get the whole list.
+Store the output of `str_extract_all` in a new column called `bully_instance`. 
+
+```{r}
+head(str_extract(df.tweets$lower_text, 'bull[a-z]+'), 15)
+head(str_extract_all(df.tweets$lower_text, 'bull[a-z]+'), 15)
+df.tweets$bully_instance <- str_extract_all(df.tweets$lower_text, 'bull[a-z]+')
+```
+
+We can see the instance in context with `dplyr` and the `select` function.
+
+```{r message = FALSE,}
+library(dplyr)
+df.tweets[13:15,] %>% select(text, bully_instance)
+```
+
+What does the function do when there are more than one items extracted?
