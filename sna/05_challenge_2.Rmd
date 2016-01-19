@@ -38,44 +38,32 @@ Our goal will be to explain friendships in the first semester, so we will keep o
 edges <- edges[edges$sem1_friend>0,]
 ```
 
-Now we can create the igraph object
+Now can create the igraph object
 
 ```{r}
-library(igraph)
-g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+
 ```
 
 Here you will get an error. Why? Some students name as friends other students in different classrooms. We'll get rid of those edges and try again. How many nodes and edges does this network have? Visualize it to see what else you learn.
 
 ```{r}
 edges <- edges[edges$alter_id %in% nodes$std_id,]
-g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
-g
-plot(g)
+
+...
 ```
 
-Now we can convert the `igraph` object to `network` format. Check that the size of the network is the same as before.
+Now convert the `igraph` object to `network` format. Check that the size of the network is the same as before.
 
 ```{r}
-library(intergraph)
-net <- asNetwork(g)
-net
+
 ```
 
 And we're ready to start estimating models! First, estimate a baseline model with total number of edges and number of mutual edges. What do you learn?
 
 ```{r}
-library(ergm)
-out <- ergm(net ~ edges + mutual)
-summary(out)
-exp(coef(out)[1]) # density around 10%
-exp(coef(out)[2]) # high reciprocity
 ```
 
-Now, let's examine the effect of similarity across race, gender, and income. 
+Now, examine the effect of similarity across race, gender, and income. What do you learn?
 ```{r}
-out <- ergm(net ~ edges + mutual + nodematch("gnd") + nodematch("rce") + absdiff("per_cap_inc"))
-summary(out)
-exp(coef(out)[4]) # high reciprocity on race
 ```
 
