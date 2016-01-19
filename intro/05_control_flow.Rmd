@@ -61,7 +61,7 @@ log(0.1)
 n
 ```
 
-#### If statements
+### If statements
 
 Depending on whether a condition is true or false, we might want to execute different chunks of code.
 
@@ -80,3 +80,55 @@ compare_xy(4, 3)
 compare_xy(1, 1)
 ```
 
+### Modular code
+
+When writing lots of code, it's a good idea to keep things as modular as possible. This means breaking complicated tasks into smaller, simpler tasks. You may benefit by using these small chunks in other sections of code you write, and they are easier to check and debug if you are gettin gerrors. 
+
+For example, let's say we want to create a new Daily Show data frame with 3 variables for month, day, and year, as well as a variable for the number of previous appearances the guest had on the show. We could do:
+
+```{r}
+modify_daily <- function(daily) {
+  # first convert "MM/DD/YY"" to month/day variables
+  show.split <- strsplit(as.vector(daily$Show), "/")
+  month <- sapply(show.split, function(x) x[1])
+  day <- sapply(show.split, function(x) x[2])
+  year <- sapply(show.split, function(x) x[3])
+  
+  # now get previous appearances
+  prev <- rep(0, nrow(daily))
+  for(i in 2:length(prev)) {
+    prev[i] <- sum(daily$Raw_Guest_List[1:(i-1)] == daily$Raw_Guest_List[i])
+  }
+  return(data.frame(year, month, day, prev))
+}
+
+new_daily <- modify_daily(daily)
+```
+
+But an even better (more modular) approach is to write separate functions that generate the date variables and previous appearance variable:
+
+```{r}
+separate_MDY <- function(mdy, sep="/") {
+  mdy.split <- strsplit(as.vector(mdy), sep)
+  month <- sapply(mdy.split, function(x) x[1])
+  day <- sapply(mdy.split, function(x) x[2])
+  year <- sapply(mdy.split, function(x) x[3])
+  return(data.frame(year, month, day))
+}
+prev_app <- function(vec) {
+  prev <- rep(0, length(vec))
+  for(i in 2:length(prev)) {
+    prev[i] <- sum(vec[1:(i-1)] == vec[i])
+  }
+  return(prev)
+}
+modify_daily_2 <- function(daily) {
+  mdy <- separate_MDY(daily$Show)
+  prev <- prev_app(daily$Raw_Guest_List)
+  return(data.frame(mdy, prev))
+}
+
+new_daily <- modify_daily_2(daily)
+```
+
+The advantage here is that we could use the smaller components `separate\_MDY` and `prev_app` in other sections of code later on, if only one of these two tasks were needed. Also, if we input a new data file that stores dates as "MM-DD-YY" instead of "MM/DD/YY", the generic `separate_MDY` module can handle this by changing supplying the `sep="-"` argument; we wouldn't need to change the main `modify\_daily\_2` function. 

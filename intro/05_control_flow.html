@@ -91,12 +91,12 @@ system.time(replicate(100, {
   }
 }))</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.361   0.001   0.360</code></pre>
+##   0.373   0.000   0.373</code></pre>
 <pre class="r"><code>system.time(replicate(100, {
   sapply(show.split, function(x) x[1])
 }))</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.253   0.007   0.261</code></pre>
+##   0.269   0.008   0.276</code></pre>
 <div id="while-loops" class="section level4">
 <h4>While loops</h4>
 <p>Another common loop type is a “while” loops, which repeats indefinitely until some stopping condition is met (or alternatively, <em>while</em> a looping condition remains true). Such a loop is very useful, for instance, for determining convergence of a numerical algorithm. To illustrate this, let’s calculate the logarithm of 0.1 using the Taylor series expansion</p>
@@ -118,8 +118,9 @@ value</code></pre>
 <pre class="r"><code>n</code></pre>
 <pre><code>## [1] 90</code></pre>
 </div>
-<div id="if-statements" class="section level4">
-<h4>If statements</h4>
+</div>
+<div id="if-statements" class="section level3">
+<h3>If statements</h3>
 <p>Depending on whether a condition is true or false, we might want to execute different chunks of code.</p>
 <pre class="r"><code>compare_xy &lt;- function(x, y) {
   if (x &lt; y) {
@@ -137,6 +138,49 @@ compare_xy(3, 4)</code></pre>
 <pre class="r"><code>compare_xy(1, 1)</code></pre>
 <pre><code>## [1] &quot;x and y are equal&quot;</code></pre>
 </div>
+<div id="modular-code" class="section level3">
+<h3>Modular code</h3>
+<p>When writing lots of code, it’s a good idea to keep things as modular as possible. This means breaking complicated tasks into smaller, simpler tasks. You may benefit by using these small chunks in other sections of code you write, and they are easier to check and debug if you are gettin gerrors.</p>
+<p>For example, let’s say we want to create a new Daily Show data frame with 3 variables for month, day, and year, as well as a variable for the number of previous appearances the guest had on the show. We could do:</p>
+<pre class="r"><code>modify_daily &lt;- function(daily) {
+  # first convert &quot;MM/DD/YY&quot;&quot; to month/day variables
+  show.split &lt;- strsplit(as.vector(daily$Show), &quot;/&quot;)
+  month &lt;- sapply(show.split, function(x) x[1])
+  day &lt;- sapply(show.split, function(x) x[2])
+  year &lt;- sapply(show.split, function(x) x[3])
+  
+  # now get previous appearances
+  prev &lt;- rep(0, nrow(daily))
+  for(i in 2:length(prev)) {
+    prev[i] &lt;- sum(daily$Raw_Guest_List[1:(i-1)] == daily$Raw_Guest_List[i])
+  }
+  return(data.frame(year, month, day, prev))
+}
+
+new_daily &lt;- modify_daily(daily)</code></pre>
+<p>But an even better (more modular) approach is to write separate functions that generate the date variables and previous appearance variable:</p>
+<pre class="r"><code>separate_MDY &lt;- function(mdy, sep=&quot;/&quot;) {
+  mdy.split &lt;- strsplit(as.vector(mdy), sep)
+  month &lt;- sapply(mdy.split, function(x) x[1])
+  day &lt;- sapply(mdy.split, function(x) x[2])
+  year &lt;- sapply(mdy.split, function(x) x[3])
+  return(data.frame(year, month, day))
+}
+prev_app &lt;- function(vec) {
+  prev &lt;- rep(0, length(vec))
+  for(i in 2:length(prev)) {
+    prev[i] &lt;- sum(vec[1:(i-1)] == vec[i])
+  }
+  return(prev)
+}
+modify_daily_2 &lt;- function(daily) {
+  mdy &lt;- separate_MDY(daily$Show)
+  prev &lt;- prev_app(daily$Raw_Guest_List)
+  return(data.frame(mdy, prev))
+}
+
+new_daily &lt;- modify_daily_2(daily)</code></pre>
+<p>The advantage here is that we could use the smaller components <code>separate\_MDY</code> and <code>prev_app</code> in other sections of code later on, if only one of these two tasks were needed. Also, if we input a new data file that stores dates as “MM-DD-YY” instead of “MM/DD/YY”, the generic <code>separate_MDY</code> module can handle this by changing supplying the <code>sep=&quot;-&quot;</code> argument; we wouldn’t need to change the main <code>modify\_daily\_2</code> function.</p>
 </div>
 
 
