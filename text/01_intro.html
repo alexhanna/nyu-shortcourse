@@ -69,9 +69,10 @@ img {
 
 
 <p><a href="../text/README.md">« Text Analysis Module</a></p>
-<p>In this section we are going to focus on some basic string manipulation in R. We will be using some of the R base functionaity as well as the <code>stringr</code> package. For more information on the <code>stringr</code> package, check out the <a href="https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html">documentation vignette</a>.</p>
+<p>In this section we are going to focus on some basic string manipulation in R. We will be using some of the R base functionality as well as the <code>stringr</code> package. For more information on the <code>stringr</code> package, check out the <a href="https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html">documentation vignette</a>.</p>
 <p>R stores the basic string in a character vector. <code>length</code> gets the number of items in the vector, while <code>nchar</code> is the number of characters in the vector.</p>
-<pre class="r"><code>library(stringr)
+<pre class="r"><code># install.packages(&quot;stringr&quot;)
+library(stringr)
 str1 &lt;- 'This is a string.'
 is.character(str1)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
@@ -97,6 +98,12 @@ length(v_str1)</code></pre>
 <p>We can grab substrings with <code>substr</code>. The first argument is the string, the second is the beginning index (starting from 1), and the third is final index.</p>
 <pre class="r"><code>substr(str1, 11, 16)</code></pre>
 <pre><code>## [1] &quot;string&quot;</code></pre>
+<p>This is useful when working with date strings as well:</p>
+<pre class="r"><code>dates &lt;- c(&quot;2015/01/01&quot;, &quot;2014/12/01&quot;)
+substr(dates, 1, 4) # years</code></pre>
+<pre><code>## [1] &quot;2015&quot; &quot;2014&quot;</code></pre>
+<pre class="r"><code>substr(dates, 6, 7) # months</code></pre>
+<pre><code>## [1] &quot;01&quot; &quot;12&quot;</code></pre>
 <p>We can split up strings by a separator using <code>strsplit</code>.</p>
 <pre class="r"><code>strsplit(str1, &quot; &quot;)</code></pre>
 <pre><code>## [[1]]
@@ -106,7 +113,20 @@ length(v_str1)</code></pre>
 ## [1] &quot;Thi&quot;       &quot;i&quot;         &quot;a string.&quot;</code></pre>
 <p>It can also be part of a larger data frame of information. For this, load the dataset of tweets from the bullying project. Use <code>head</code> to look at the first few lines.</p>
 <pre class="r"><code>df.tweets &lt;- read.csv(&quot;bullying.csv&quot;, header = TRUE, stringsAsFactors = FALSE)
-is.character(df.tweets$text)</code></pre>
+str(df.tweets)</code></pre>
+<pre><code>## 'data.frame':    5022 obs. of  11 variables:
+##  $ id             : num  9.97e+16 9.97e+16 9.97e+16 9.97e+16 9.97e+16 ...
+##  $ user_id        : int  20292001 324101452 323123564 320005085 24140043 62934083 27067360 76683098 257241710 96646049 ...
+##  $ created_at     : chr  &quot;2011-08-06 05:02:51&quot; &quot;2011-08-06 05:03:22&quot; &quot;2011-08-06 05:03:24&quot; &quot;2011-08-06 05:03:26&quot; ...
+##  $ lang           : chr  &quot;en&quot; &quot;en&quot; &quot;en&quot; &quot;en&quot; ...
+##  $ text           : chr  &quot;#Canada News: And the saga of official bullying #bilingualism continues.  #english #french #francophone... HTTPLINK&quot; &quot;HTTPLINK   scabies Celebrities open up about their bullying experiences in new book Dont Peak at High School&quot; &quot;scabies Celebrities open up about their bullying experiences in new book Dont Peak at High School ;) HTTPLINK&quot; &quot;:O Celebrities open up about their bullying experiences in new book Dont Peak at High School HTTPLINK scabies&quot; ...
+##  $ bullying_traces: chr  &quot;n&quot; &quot;n&quot; &quot;n&quot; &quot;n&quot; ...
+##  $ type           : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ form           : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ teasing        : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ author_role    : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ emotion        : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...</code></pre>
+<pre class="r"><code>is.character(df.tweets$text)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>head(df.tweets$text)</code></pre>
 <pre><code>## [1] &quot;#Canada News: And the saga of official bullying #bilingualism continues.  #english #french #francophone... HTTPLINK&quot;
@@ -123,6 +143,13 @@ is.character(df.tweets$text)</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code>grep('bully', c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.'))</code></pre>
 <pre><code>## [1] 2</code></pre>
+<p><code>grepl</code> returns <code>TRUE</code> or <code>FALSE</code>, indicating whether each element of the character vector contains that particular pattern.</p>
+<pre class="r"><code>grepl('bully', 'That guy is a buly.')</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code>grepl('bully', 'That guy is a bully. Fixed that for you.')</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>grepl('bully', c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.'))</code></pre>
+<pre><code>## [1] FALSE  TRUE FALSE</code></pre>
 <p>Within the dataset, we can use the results of <code>grep</code> to get particular rows. First, check if the number of tweets mentioning “bully” match the total number of rows in the data frame.</p>
 <pre class="r"><code>nrow(df.tweets)</code></pre>
 <pre><code>## [1] 5022</code></pre>
@@ -147,7 +174,8 @@ length(grep('bully', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
 <pre class="r"><code>length(grep('bull[a-z]+', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
-<p>That did the trick. Say we want to extract the word that actually refers to the bullying in the tweet. We can use <code>str_extract</code> and <code>str_extract_all</code> to do that with the regular expression we created later. Using <code>str_extract</code> will only get the first instance, while <code>str_extract_all</code> will get the whole list. Store the output of <code>str_extract_all</code> in a new column called <code>bully_instance</code>.</p>
+<p>That did the trick. Say we want to extract the word that actually refers to the bullying in the tweet. We can use <code>str_extract</code> and <code>str_extract_all</code> to do that with the regular expression we created later. Using <code>str_extract</code> will only get the first instance, while <code>str_extract_all</code> will get the whole list.</p>
+<p>Store the output of <code>str_extract_all</code> in a new column called <code>bully_instance</code>.</p>
 <pre class="r"><code>head(str_extract(df.tweets$lower_text, 'bull[a-z]+'), 15)</code></pre>
 <pre><code>##  [1] &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot;
 ##  [7] &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bullying&quot; &quot;bully&quot;   
@@ -210,6 +238,55 @@ df.tweets[13:15,] %&gt;% select(text, bully_instance)</code></pre>
 ## 14                            bulling
 ## 15 bullies, bullies, bullied, bullied</code></pre>
 <p>What does the function do when there are more than one items extracted?</p>
+<p>Alternatively, we can also collapse the different words mentioned ourselves.</p>
+<pre class="r"><code>mentions &lt;- str_extract_all(df.tweets$lower_text, 'bull[a-z]+')
+mentions[10:15] # a list</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;bullying&quot;
+## 
+## [[2]]
+## [1] &quot;bullying&quot;
+## 
+## [[3]]
+## [1] &quot;bully&quot;
+## 
+## [[4]]
+## [1] &quot;bullying&quot;
+## 
+## [[5]]
+## [1] &quot;bulling&quot;
+## 
+## [[6]]
+## [1] &quot;bullies&quot; &quot;bullies&quot; &quot;bullied&quot; &quot;bullied&quot;</code></pre>
+<pre class="r"><code>mentions &lt;- lapply(mentions, paste, collapse=&quot;, &quot;)
+mentions[10:15] # a list</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;bullying&quot;
+## 
+## [[2]]
+## [1] &quot;bullying&quot;
+## 
+## [[3]]
+## [1] &quot;bully&quot;
+## 
+## [[4]]
+## [1] &quot;bullying&quot;
+## 
+## [[5]]
+## [1] &quot;bulling&quot;
+## 
+## [[6]]
+## [1] &quot;bullies, bullies, bullied, bullied&quot;</code></pre>
+<pre class="r"><code>df.tweets$bully_instance &lt;- unlist(mentions) # a vector
+df.tweets[13:15, c(&quot;text&quot;, &quot;bully_instance&quot;)]</code></pre>
+<pre><code>##                                                                                                                    text
+## 13 fan, not here to defend him. I just don't agree to cyber bullying. It's a coward's way to defamed a person. Be smart
+## 14                                                         Read my response to &quot;Já sofreu bulling na escola?&quot;: HTTPLINK
+## 15                               &quot;bullies will always be bullies.&quot; and the bullieD will always be the bullieD bitches;*
+##                        bully_instance
+## 13                           bullying
+## 14                            bulling
+## 15 bullies, bullies, bullied, bullied</code></pre>
 
 
 </div>
