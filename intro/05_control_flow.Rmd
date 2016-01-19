@@ -1,0 +1,12 @@
+---
+title: "Control Flow and Modularity"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Content:
+
+- Loops
+- Ifs
+- Modularity and debugging

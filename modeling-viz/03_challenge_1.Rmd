@@ -1,0 +1,25 @@
+---
+title: "Challenge 1"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Try not to look at the previous code we used!
+
+```{r}
+
+```
+
+
+1. Make a time series plot showing Democratic/Republican control of congress over time. By varying color, line thickness, or other graphical properties, make this plot also convey the average age of the congressmen representing each part over time.
+
+```{r}
+
+```
+
+2. Write a function that, for a particular congress (e.g. congress 113), shows a map of the party breakdown by state.
+
+```{r}
+
+```

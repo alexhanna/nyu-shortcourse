@@ -1,0 +1,45 @@
+---
+title: "Challenge 2"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Write commands that help you answer the following questions using the dataset `taxi-trips.csv`. Note that a dictionary of the variables names for this data set is in the file `taxi-dictionary.pdf`, though we have split the pickup and dropoff "datetime" variables into "date" and "time" variables for each. 
+
+```{r}
+
+```
+
+
+1. Convert the `pickup_time` and `dropoff_time` variables into numeric variables (for instance, minutes past 12AM), so that you can create a new variable called `trip_time` (in minutes).
+
+```{r}
+
+```
+
+2. NYC taxi fares start at 3.00, and then add 2.00 per mile and 0.40 per minute stopped or in traffic (though the data set includes some flat fare or negotiated fare rides). See if you can reverse engineer this information by running a regression of `fare_amount` on `trip_distance` and `trip_time`. 
+
+```{r}
+
+```
+
+
+3. Using this regression model, see if you can identify passengers who have been overcharged.
+
+```{r}
+
+```
+
+
+4. Add pickup and dropoff long/lat to your regression model, and use cross validation to check whether the predictive performance of the model is improved.
+
+```{r}
+
+```
+
+5. Using logistic regression, identify factors (e.g. fare amount, pickup time, number of passengers, etc.) that are predictive of whether or not passengers pay by credit card.
+
+```{r}
+
+```

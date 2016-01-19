@@ -1,5 +1,5 @@
 ---
-title: "RMarkdown setup"
+title: "Setting Up R and RMarkdown"
 author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document

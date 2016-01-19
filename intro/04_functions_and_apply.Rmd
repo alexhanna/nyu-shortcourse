@@ -1,0 +1,14 @@
+---
+title: "Apply Functions"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Being designed for statistics and data analysis, `R` has powerful built-in functions for data manipulation. 
+
+Content:
+
+- apply functions (sapply, tapply, etc.)
+- defining your own functions
+- R packages

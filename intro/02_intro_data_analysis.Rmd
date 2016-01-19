@@ -1,150 +1,89 @@
 ---
-title: "Introduction to data analysis"
+title: "Data Manipulation"
 author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document
 ---
 
-### Working with vectors
+### Reading data from a file
 
+Instead of creaing data frames "by hand", we can read them from files. The commost common types of files that can be easily imported into R are csv and txt files, although packages exist to read from Excel spreadsheets, JSON and XML files, as well as to parse HTML pages and query SQL, mongo, and other databases.
+
+For example, let's read in a csv file containing information on guest appearances on *The Daily Show with Jon Stewart*.
 
 ```{r}
-math_scores <- c(72, 58, 85, 83, 87, 66, 72, 93, 87, 84)
-reading_scores <- c(50, 56, 76, 79, 74, 57, 80, 98, 90, 78)
+daily <- read.csv("./daily_show_guests.csv") # double check working directory
+dim(daily) # dimensions of data set
+head(daily) # display first 5 rows
+summary(daily)
 ```
 
-We can also generate vector with the `seq` function:
+When reading data frames, `R` automatically converts all character vectors into factors. This doesn't make sense sometimes---for instance, `Show` seems more appropriate as a character vector since there aren't values of this variable that appear frequently.
 
 ```{r}
-seq(1, 10, by=1)
+daily$Show <- as.character(daily$Show)
+daily$Show <- as.vector(daily$Show) # also works
 ```
 
-Note that this is equivalent to:
+The `$` character allows us to access the `Group` variable in `daily`. We can manipulate `daily$Group` as we would any other factor (or character) vector, such as the examples we saw previously.
+
+### Data cleaning
+
+Most data is *messy*. This means different things for different data sets, but some common examples include missing values, typos/errors, inconsistent formatting, or data that's in the wrong "shape". Generally speaking, data cleaning is the process of correcting issues that prevent data from being input into statistical, machine learning, or visualization algorithms.
+
+#### Missing values
+
+When looking at the `summary` of the `daily` data frame, we noticed that some variables had several `NA` entries. Let's examine these entries to see how they arose and whether we should remove them.
 
 ```{r}
-1:10
+subset(daily, is.na(GoogleKnowlege_Occupation) | is.na(Group))
 ```
 
-Functions to determine the structure of vectors:
+Most of these appear to be case where there was no guest, but some other special segment. The one exception seems to be the "John Bambenek" episode, where he simply is not given a profession. A quick Google search shows that he's a programmer, so let's update the corresponding entry in the `Group` variable. We saw in the data summary that `Group` is a factor variable. Which level would be appropriate for Bambenek?
 
 ```{r}
-length(math_scores)
-head(math_scores)
-tail(math_scores)
-```
-
-How to subset vectors:
-
-```{r}
-math_scores[5]
-reading_scores[5]
-math_scores[-1]
-```
-
-Using vectors to subset vectors:
-
-```{r}
-math_scores[c(1,2,3)]
-math_scores[5:7]
-math_scores[-(1:5)] # note parentheses!
-```
-
-`which` function to compare all values of a vector
-
-```{r}
-which(math_scores>=80)
-high <- which(math_scores>=80)
-math_scores[high]
-```
-
-Statistical functions:
-
-```{r}
-mean(math_scores)
-sum(math_scores)
-sd(math_scores)
-min(math_scores)
-max(math_scores)
-```
-
-All in one function:
-
-```{r}
-summary(math_scores)
-```
-
-Vectorized operations:
-```{r}
-math_scores > 80
-math_scores + reading_scores
-```
-
-### Data frames
-
-```{r}
-df <- data.frame("math" = math_scores, "reading" = reading_scores)
-```
-
-Access variables:
-```{r}
-df$math
-df$math[1:3]
-df$math[-(1:5)] # note parentheses!
-```
-
-Access rows and columns. DF internally is a matrix
-```{r}
-df[1,]
-df[,1]
-```
-
-Subset data frame in same way as vectors
-```{r}
-df[1:5,]
-df[df$math > 85, ]
-```
-
-Identify the maximum
-```{r}
-best_student <- which.max(df$math)
-df[best_student, ]
-```
-
-### Working with a data frame
-
-```{r}
-df <- read.csv("humansofnewyork.csv")
-```
-
-`View(df)`
-
-```{r}
-str(df)
+levels(daily$Group)
+daily$Group[grep("Bambenek", daily$Raw_Guest_List)] <- "Misc"
 ```
 
 
-```{r}
-head(df)
-head(df, n=1)
-tail(df)
+#### Manipulating factors
 
+Let's also rename every `"media"` entry to `"Media"`, as this seems to be an oversight.
+
+```{r}
+daily$Group[which(daily$Group == "media")] <- "Media"
+daily <- droplevels(daily) # reformats factor variables to drop unused levels
 ```
 
-```{r}
-df$message[100]
-df[100,]
-mean(df$likes_count)
-max(df$likes_count)
-```
+### Summaries and descriptive statistics
+
+- Which guests have appeared most on the show?
 
 ```{r}
-which(df$likes_count==3384088)
+guest.table <- table(daily$Raw_Guest_List)
+ord <- order(guest.table, decreasing = TRUE)
+guest.table[ord][1:10]
 ```
 
-```{r}
-df[1263,]
-```
+- What percentage of guests have appeared at least twice?
 
 ```{r}
-df[which(df$likes_count==max(df$likes_count)),]
+sum(guest.table > 1) / length(guest.table) # counting guests
+sum(guest.table[which(guest.table > 1)]) / sum(guest.table) # counting shows
+```
+
+- Who are all the guests named "Michael"?
+
+```{r}
+guest.names <- names(guest.table)
+guest.names[grep("Michael", guest.names)]
+```
+
+Let's make a new data frame consisting of just the shows with guests named "Michael".
+
+```{r}
+michaels <- subset(daily, Raw_Guest_List %in% guest.names[grep("Michael", guest.names)])
+# alternative:
+michaels <- daily[daily$Raw_Guest_List %in% guest.names[grep("Michael", guest.names)], ]
 ```

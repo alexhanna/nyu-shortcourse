@@ -1,6 +1,6 @@
 ---
 title: "Challenge 1"
-author: "Pablo Barbera"
+author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document
 ---

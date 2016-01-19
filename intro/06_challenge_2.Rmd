@@ -1,7 +1,56 @@
 ---
 title: "Challenge 2"
-author: "Pablo Barbera"
+author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document
 ---
 
+Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Try not to look at the previous code we used!
+
+```{r}
+
+```
+
+
+1. How many total congressmen have represented each political party?
+
+```{r}
+
+```
+
+2. Who was the youngest congressman elected and in how many congresses did he/she serve?
+
+```{r}
+
+```
+
+
+3. In how many congresses did the House of Representatives have a Democratic majority?
+
+```{r}
+
+```
+
+4. Which state has had the oldest congressmen on average?
+
+```{r}
+
+```
+
+5. For which state is the proportion of total Democrats throughout history closest to the proportion of Republicans?
+
+```{r}
+
+```
+
+6. How many times has the majority party in the House of Representatives changed?
+
+```{r}
+
+```
+
+7. Which state in the 113th congress has the most experienced congressmen (measured my the average number of congresses in which they served)?
+
+```{r}
+
+```
