@@ -5,8 +5,6 @@
 
 Content analysis is the process of making sense out of visual, textual, and audio content. Textual analysis is a subset of content analysis which focuses on the written and spoken word. Until recently, most social science treatments of textual data has focused on close readings by humans of text. However, social scientists have adopted methods from the fields of natural language processing and machine learning to integrate automated textual analysis methods into social science practice. [Grimmer and Stewart (2013)](http://web.stanford.edu/~jgrimmer/tad2.pdf) provide a detailed outline of automated textual analysis methods within the social sciences, with a specific focus on political text.
 
-![](Grimmer_Stewart_F1.png)
-
 In this workshop we will learn how to deal with text data sets using automated methods. We'll focus first on how to handle text on very basic level, then move to basic searching of text using keyword searches and regular expressions. We'll talk about preprocessing for larger-scale text analysis and conclude with machine learning methods of textual analysis, including supervised classification and topic modeling. 
 
 ## Motivating Example: Understanding and Fighting Bullying with Machine Learning

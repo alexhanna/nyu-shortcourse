@@ -1,5 +1,5 @@
 ---
-title: "Machine Learning: Text Classification and Topic Modeling"
+title: "Machine Learning: Document Classification and Topic Modeling"
 author: Alex Hanna
 date: January 21, 2016
 output: html_document
@@ -7,101 +7,93 @@ output: html_document
 
 [&laquo; Text Analysis Module](../text/README.md)
 
-The `RTextTools` and `stm` packages are the primary workhorse package we`re going to use.  
+Machine learning can be defined as a set of probabilistic methods that can automatically detect patterns in data and use that information to make predictions in other data. Machine learning methods are at the center of most data science machinery, including those which have to do with text. We are going to explore two types of machine learning methods in this section: document classification and topic modeling. In a word, document classification is best used when you know the categories you are trying to predict, while topic modeling better-suited when you do not know these categories. This image from Grimmer and Stewart (2013) is a good visual for where the divisions occur. 
 
-You can see the documentation for these at [https://cran.r-project.org/web/packages/RTextTools/RTextTools.pdf](https://cran.r-project.org/web/packages/RTextTools/RTextTools.pdf) 
+![](Grimmer_Stewart_F1.png)
 
-Load the `tm` package,  `dplyr` and `tidyr` for data munging, and `ggplot2` for visualization.
+## Document Classification
+
+Document classification is in a class of methods known as "supervised machine learning," which just means that there are humans "supervising" the process of annotation with known categories. This process involves "training" a classifier on a subset of documents, then using that classifier to classify a "test" set of documents. 
+
+First, load the `tm` package which we used in the last section, as well as the `RTextTools` package, which has documentation [here](https://cran.r-project.org/web/packages/RTextTools/RTextTools.pdf). `RTextTools` provides functions for document classification, as well some handy functions which simplifies some of the preprocessing we did with `tm`.
+
+The function `create_table` makes a `DocumentTermMatrix` and applies a number of preprocessing transformations by default, including converting to lowercase and stripping whitespace. We will also specify that we want stemming, that we want to keep in punctuation (because emoji :-D >:( can be important for classification), and we want to use the tf-idf weighting.
 
 ```{r message=FALSE}
-library(RTextTools)
 library(tm)
-library(dplyr)
-library(tidyr)
+library(RTextTools)
 
-library(ggplot2)
-```
-
-## Supervised text classification
-
-Load the 20 newsgroups dataset
-
-```{r results="hide"}
-data <- read.csv("http://ssc.wisc.edu/~ahanna/20_newsgroups.csv", stringsAsFactors = FALSE)
-data <- data[-1]
-data <- tbl_df(data)
-```
-
-Have a look at the shape of the data.
-```{r results="hide"}
-names(data)
-head(data$text, 2)
-nrow(data)
-```
-
-Sample 20% of the data.
-```{r}
-data <- sample_frac(data, size = 0.1)
-```
-
-Create a Document-Term Matrix and apply a number of preprocessing transformations. Many preprocessing transformations take place by default, such as removing punctuation, converting to lowercase, and stripping whitespace.
-
-```{r results="hide"}
-dtm <- create_matrix(data, language="english")
+df.tweets <- read.csv("bullying.csv", stringsAsFactors = FALSE)
+dtm       <- create_matrix(df.tweets$text, language="english", stemWords = TRUE, weighting = weightTfIdf, removePunctuation = FALSE)
 dtm
 ```
 
-We can get a sense of what this matrix looks like. The first argument is the range of documents, while the second is the range of terms.
-
-```{r results="hide"}
-inspect(dtm[1:10, 1:5])
+We will replace "y" with "1" and "n" with "0" for the `bullying_traces` column. Convert the column to a `numeric` type.
+```{r}
+df.tweets$bullying_traces[df.tweets$bullying_traces == 'y'] <- 1
+df.tweets$bullying_traces[df.tweets$bullying_traces == 'n'] <- 0
+df.tweets$bullying_traces <- as.numeric(df.tweets$bullying_traces)
 ```
 
-Create a break between the training and test samples and create a container which can be used with `RTextTools` models.
+We will use 90% of the data for the training set and 10% for the test set. Then, we will create a container which can be used with `RTextTools` models.
 
 ```{r}
-training_break <- as.integer(0.9*nrow(data))
-container <- create_container(dtm,t(data$target),trainSize=1:training_break, testSize=training_break:nrow(data),virgin=FALSE)
+training_break <- as.integer(0.9*nrow(df.tweets))
+container      <- create_container(dtm, t(df.tweets$bullying_traces), trainSize=1:training_break, testSize=training_break:nrow(df.tweets), virgin=FALSE)
 ```
 
-Now we can cross-validate our supervised learning models. We can see which ones are available with print_algorithms()
+Now we can train and cross-validate a supervised learning model. We can see which ones are available with print_algorithms().
 
-```{r results="hide"}
+```{r}
 print_algorithms()
 ```
 
-For this workshop, we are using support vector machines (SVM). For cross-validaiton, I am choosing 3 folds. Ideally, we would play around with multiple classifiers and find the one which works the best for the task.
+Cross-validation is a process of breaking up the training set into _k_ folds, using _k - 1_ folds as a training set and testing it against the last fold.
 
-```{r results = 'hide'}
-cv.svm <- cross_validate(container, 3, algorithm = 'SVM', kernel = 'linear')
-```
+We will use 3 folds. Ideally, we would play around with multiple classifiers and find the one which works the best for the task. But for this workshop, we will choose the [Support Vector Machine](https://en.wikipedia.org/wiki/Support_vector_machine) (SVM). 
 
-This is the mean accuracy score.
+Accuracy is a measure defined as true positives + true negatives / the total population of items. It is a rough metric of model performance.
 
 ```{r}
+cv.svm <- cross_validate(container, 3, algorithm = 'SVM', kernel = 'linear')
 cv.svm$meanAccuracy
 ```
 
-Now we can train the model, apply the trained model to our test set, and create analytics. We can see the [precision, recall](https://en.wikipedia.org/wiki/Precision_and_recall), and F1-score of the classifier and summarize them with `summary`. We can also see the SVM label, the correct label, and the SVM probability which was assigned to it.
+Now we can train the model, apply the trained model to our test set, and create analytics. 
 
-```{r results = 'hide'}
+The metrics of [precision, recall, and F-score](https://en.wikipedia.org/wiki/Precision_and_recall) are somewhat more descriptive than accuracy. _Precision_ is the proportion of classified documents which are selected, while _recall_ is the number of relevant documents which have been selected. In the supervised learning example, a high precision indicates that the classifier can correctly classify documents without many false hits, while a high recall indicates that it can retrieve a high number of correctly classifed documents. _F1-score_ is the harmonic mean of the two metrics.
+
+Once we have trained the model and applied it, we can produce precision, recall, and F-score measures with `create_analytics` and summarize them with `dplyr`. We can also see which label the model applied, the correct label, and the confidence score which was assigned to it.
+
+```{r message = FALSE}
+library(dplyr)
+
 models    <- train_model(container, algorithms = c("SVM"))
 results   <- classify_model(container, models)
 analytics <- create_analytics(container, results)
 analytics@algorithm_summary
 head(analytics@document_summary[1:3])
-summary(analytics@algorithm_summary)
-```
-
-As a last analytic, we can plot the distribution of SVM probabilities against if they were correct versus whether they were incorrect.
-
-```{r results = 'hide'}
-p <- ggplot(analytics@document_summary, aes(SVM_PROB, fill = factor(CONSENSUS_INCORRECT)))
-p <- p + geom_histogram()
-p <- p + scale_fill_manual(values = c("grey", "red"), labels = c("Correct", "Incorrect"))
-p <- p + theme_bw() + theme(legend.title = element_blank())
-
-p <- p + facet_wrap(~ MANUAL_CODE)
+analytics@algorithm_summary %>% summarise(P = mean(SVM_PRECISION), R = mean(SVM_RECALL), F1 = mean(SVM_FSCORE))
 ```
 
 ## Topic Modeling
+
+While supervised learning is used when we know the categories we want to produce, unsupervised learning (including topic modeling) is used when we do not know the categories. In topic modeling, documents are not assumed to belong to one topic or category, but simultaneously belong to several topics. The topic distributions also vary over documents.
+
+For the topic model, we will focus only on messages which are in English.
+
+```{r message = FALSE}
+library(topicmodels)
+
+corpus <- VCorpus(VectorSource(df.tweets[df.tweets$lang == 'en',]$text))
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeWords, c("bully", "bullying", "bullied"))
+dtm <- DocumentTermMatrix(corpus)
+
+## get rid of documents which have no terms after removing the above
+dtm <- dtm[rowSums(as.matrix(dtm)) > 0,]
+
+lda <- LDA(dtm, k = 20, method = "Gibbs", control = list(seed = 2010, burnin = 300, thin = 30, iter = 300))
+get_terms(lda, 10)
+```
