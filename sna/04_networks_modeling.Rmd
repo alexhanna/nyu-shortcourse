@@ -8,8 +8,8 @@ output: html_document
 `ergm` package works with object in `network` format (not `igraph`), so we need to convert first between packages using the `intergraph` package.
 
 ```{r, echo=FALSE, message=FALSE}
-nodes <- read.csv("congress-twitter-network-nodes.csv")
-edges <- read.csv("congress-twitter-network-edges.csv")
+nodes <- read.csv("data/congress-twitter-network-nodes.csv")
+edges <- read.csv("data/congress-twitter-network-edges.csv")
 library(igraph)
 g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
 g <- decompose(g)[[1]]

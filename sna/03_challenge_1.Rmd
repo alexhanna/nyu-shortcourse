@@ -15,8 +15,8 @@ In the `sna` folder of the GitHub repository, you will find two data files:
 The first step will be to read these two datasets into R and construct the igrahp object. How many nodes and edges does this network have?
 
 ```{r}
-nodes <- read.csv("congress-twitter-network-nodes.csv")
-edges <- read.csv("congress-twitter-network-edges.csv")
+nodes <- read.csv("data/congress-twitter-network-nodes.csv")
+edges <- read.csv("data/congress-twitter-network-edges.csv")
 
 ...
 ```

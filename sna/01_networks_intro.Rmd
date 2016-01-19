@@ -10,9 +10,9 @@ output: html_document
 Reading list of edges and node information
 
 ```{r}
-edges <- read.csv("star-wars-network-edges.csv")
+edges <- read.csv("data/star-wars-network-edges.csv")
 head(edges)
-nodes <- read.csv("star-wars-network-nodes.csv")
+nodes <- read.csv("data/star-wars-network-nodes.csv")
 head(nodes)
 ```
 

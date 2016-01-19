@@ -7,8 +7,8 @@ output: html_document
 
 ```{r, echo=FALSE, message=FALSE}
 library(igraph)
-edges <- read.csv("star-wars-network-edges.csv")
-nodes <- read.csv("star-wars-network-nodes.csv")
+edges <- read.csv("data/star-wars-network-edges.csv")
+nodes <- read.csv("data/star-wars-network-nodes.csv")
 g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
 ```
 
