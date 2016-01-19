@@ -1,0 +1,200 @@
+---
+title: "Scraping data behind web forms"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+### Scraping web data behind web forms
+
+The most difficult scenario for web scraping is when data is hidden behind multiple pages that can only be accessed entering information into web forms. There are a few approaches that might work in these cases, with varying degree of difficulty and reliability, but in my experience the best method is to use [Selenium](https://en.wikipedia.org/wiki/Selenium_(software)).
+
+Selenium automates web browsing sessions, and was originally designed for testing purposes. You can simulate clicks, enter information into web forms, add some waiting time between clicks, etc.
+
+To learn how it works, we will scrape the website _Monitor Legislativo_, which provides information about the candidates in the recent Venezuelan legislative elections.
+
+```{r}
+url <- 'http://eligetucandidato.org/filtro/'
+```
+
+As you can see, the information we want to scrape is hidden behind these two selectors. Let's see how we can use Selenium to scrape it.
+
+The first step is to install it and load it.
+```{r}
+# install.packages("RSelenium")
+library(RSelenium)
+checkForServer() # check if Selenium Server package is installed and if not, install now
+startServer() # start server
+browser <- remoteDriver(remoteServerAddr = "localhost", port = 4444, browserName = "firefox")
+```
+
+And now we can open an instance of Firefox, and navigate to the url:
+
+```{r}
+browser$open()
+browser$navigate(url)
+```
+
+Let's assume we want to see the results of the state of Distrito Capital for the GPP party. First, let's open the source code to try to identify the elements that we're trying to scrape. With Firefox, you can use _Tools_ > _Web Developer_ > _Inspector_ and then click on the list of states and parties to find this information.
+
+```{r}
+state <- browser$findElement(using = 'id', value="estado")
+state$sendKeysToElement(list("Distrito Capital"))
+party <- browser$findElement(using = 'id', value="partido")
+party$sendKeysToElement(list("GPP"))
+```
+
+Finally, let's find the information for the _Send_ button and click on it.
+
+```{r}
+send <- browser$findElement(using = 'id', value="enviar")
+send$clickElement()
+```
+
+From this website, we want to scrape the URLs to each candidate's page. Note that there are some duplicates, which we will need to clean. As in the previous cases, we can use selectorGadget to help us identify the information we want to extract.
+
+```{r}
+links <- browser$findElements(using="css selector", value=".portfolio_title a")
+urls <- rep(NA, length(links))
+for (i in 1:length(links)){
+    urls[i] <- unlist(links[[i]]$getElementAttribute('href'))
+}
+# alternatively, we can also do
+urls <- unlist(sapply(links, function(x) x$getElementAttribute('href')))
+# removing duplicates
+urls <- urls[!duplicated(urls)]
+urls
+```
+
+The final step would be to scrape the information from each of these candidate websites, and do all of this inside loops over states and parties, and then candidates. I will not cover the rest of the example in class, but here's the code in case you want to use parts of it for your projects:
+
+```{r, eval=FALSE}
+############################################################
+## first, we scrape the list of districts and parties
+############################################################
+
+url <- 'http://eligetucandidato.org/filtro/'
+txt <- readLines(url)
+
+estados <- txt[288:311]
+estados <- gsub(".*>(.*)<.*", estados, repl="\\1")
+
+partidos <- txt[315:317]
+partidos <- gsub(".*>(.*)<.*", partidos, repl="\\1")
+
+############################################################
+## now, loop over pages to extract the URL for each candidate
+############################################################
+
+library(RSelenium)
+RSelenium::checkForServer()
+RSelenium::startServer()
+browser <- remoteDriver(remoteServerAddr = "localhost" 
+                     	, port = 4444
+                     	, browserName = "firefox"
+                     	)
+browser$open()
+
+candidatos <- c()
+
+for (estado in estados){
+	message(estado)
+	for (partido in partidos){
+		message(partido)
+
+		browser$navigate(url)
+		# input: estado
+		Sys.sleep(1)
+		more <- browser$findElement(using = 'id', value="estado")
+		more$sendKeysToElement(list(estado))
+		# input: partido
+		Sys.sleep(1)
+		more <- browser$findElement(using = 'id', value="partido")
+		more$sendKeysToElement(list(partido))
+		# click on "buscar"
+		more <- browser$findElement(using = 'id', value="enviar")
+		more$clickElement()
+		# extracting URLS
+		more <- browser$findElements(using = 'xpath', value="//a[@target='_self']")
+		count <- 0
+		while (length(more)<2 & count < 10){
+			Sys.sleep(1)
+			more <- browser$findElements(using = 'xpath', value="//a[@target='_self']")
+			count <- count + 1
+		}
+		urls <- unlist(sapply(more, function(x) x$getElementAttribute('href')))
+		urls <- unique(urls)
+
+		candidatos <- c(candidatos, urls)
+		message(length(urls), ' candidatos nuevos, ', length(candidatos), ' en total')
+
+
+	}
+}
+
+writeLines(candidatos, con=file("candidatos-urls.txt"))
+
+############################################################
+## download the html code of candidates' URLS
+############################################################
+
+for (url in candidatos){
+	id <- gsub('.*id=', '', url)
+	filename <- paste0('html/', id, '.html')
+	if (file.exists(filename)){ next }
+	message(url)
+	html <- readLines(url)
+	writeLines(html, con=file(filename))
+	Sys.sleep(2)
+}
+
+############################################################
+## extract information from html
+############################################################
+
+fls <- list.files("html", full.names=TRUE)
+df <- list()
+
+for (i in 1:length(fls)){
+
+	txt <- readLines(fls[i])
+
+	# id
+	id <- gsub('html/(.*).html', fls[i], repl="\\1")
+	# name
+	name <- txt[grep("displayCenter vc_single_image", txt)]
+	name <- gsub(".*title=\"(.*)\">.*", name, repl='\\1')
+	# partido
+	partido <- txt[grep("Partido Político", txt)]
+	partido <- gsub('.*</strong> (.*)</span.*', partido, repl="\\1")
+	# edad
+	edad <- txt[grep("Edad", txt)]
+	edad <- gsub('.*ong>(.*)</span.*', edad, repl="\\1")
+	# circuito
+	circuito <- txt[grep("Circuito", txt)]
+	circuito <- gsub('.*Circuito (.*)</span.*', circuito, repl="\\1")[1]
+	# estado
+	estado <- txt[grep("Circuito", txt)]
+	estado <- gsub('.*\">(.*) –&nbsp;.*', estado, repl="\\1")[1]
+	# twitter
+	twitter <- txt[grep("fa-twitter.*@", txt)]
+	twitter <- gsub('.*@(.*)</spa.*', twitter, repl="\\1")
+	if (length(twitter)==0){ twitter <- NA }
+
+	df[[i]] <- data.frame(
+		id = id, name = name, partido = partido, edad = edad,
+		circuito = circuito, estado = estado, twitter = twitter,
+		stringsAsFactors=F)
+}
+
+df <- do.call(rbind, df)
+df <- df[order(df$estado, df$partido, df$circuito),]
+
+write.csv(df, file="venezuela-monitor-legislativo-data.csv",
+	row.names=FALSE)
+
+```
+
+
+
+
