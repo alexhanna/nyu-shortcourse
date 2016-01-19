@@ -78,22 +78,29 @@ analytics@algorithm_summary %>% summarise(P = mean(SVM_PRECISION), R = mean(SVM_
 
 ## Topic Modeling
 
-While supervised learning is used when we know the categories we want to produce, unsupervised learning (including topic modeling) is used when we do not know the categories. In topic modeling, documents are not assumed to belong to one topic or category, but simultaneously belong to several topics. The topic distributions also vary over documents.
+While supervised learning is used when we know the categories we want to produce, unsupervised learning (including topic modeling) is used when we do not know the categories. In topic modeling, documents are not assumed to belong to one topic or category, but simultaneously belong to several topics. The topic distributions also vary over documents. 
 
-For the topic model, we will focus only on messages which are in English.
+The workhorse function for the topic model is `LDA`, which stands for Latent Dirichlet Allocation, the technical name for this particular kind of model. For the topic model, we will focus only on messages which are in English. We'll also remove the bullying-related words because they are overrepresented in the dataset and don't add anything to the interpretation of topics. The number of topics in a topic model is somewhat arbitrary, so you need to play with the number of topics to see if you get anything more meaningful. We start here with 20 topics. We can use `get_terms` to the top `n` terms from the topic model. We
 
 ```{r message = FALSE}
 library(topicmodels)
 
-corpus <- VCorpus(VectorSource(df.tweets[df.tweets$lang == 'en',]$text))
+df.tweets.en <- df.tweets[df.tweets$lang == 'en',]
+corpus <- VCorpus(VectorSource(df.tweets.en$text))
 corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeWords, c("bully", "bullying", "bullied"))
 dtm <- DocumentTermMatrix(corpus)
 
 ## get rid of documents which have no terms after removing the above
-dtm <- dtm[rowSums(as.matrix(dtm)) > 0,]
+m   <- as.matrix(dtm)
+dtm <- dtm[rowSums(m) > 0,]
 
-lda <- LDA(dtm, k = 20, method = "Gibbs", control = list(seed = 2010, burnin = 300, thin = 30, iter = 300))
+n_topics <- 20
+lda      <- LDA(dtm, k = n_topics, method = "Gibbs", control = list(seed = 2010, burnin = 300, thin = 30, iter = 300))
 get_terms(lda, 10)
 ```
+
+There seems to be some coherence in topics. Topic 19 tends to deal with health, abuse, and awareness. Topic 3 has to do with workplaces and anti-bullying, while topic 4 mentions schools and bullying prevention. 
+
+Play around with the number of topics and try to find new topics which appear.
