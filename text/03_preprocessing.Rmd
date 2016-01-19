@@ -11,17 +11,18 @@ Now that we have used some basics of string handling in R, we need to know how t
 
 In this section, we will cover several procedures, including casing, stopword removal, stemming, and vectorization.
 
-We will be using the `tm` package. You can look at further documentation [here](https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf). This is not the only package for handling large-scale text. Notably, Kenneth Benoit and colleagues (including Pablo!) have developed a package called [quanteda](https://github.com/kbenoit/quanteda) for processing poliical texts.
+We will be using the `tm` package. You can look at further documentation [here](https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf). This is the most popular package for handling large-scale text with R, but it is not the only one. Notably, Kenneth Benoit and colleagues (including Pablo!) have developed a package called [quanteda](https://github.com/kbenoit/quanteda) for processing political texts.
 
 The basic unit of work for the `tm` package is called a `Corpus`, which represents a collection of text documents with some associated metadata. Documents are the subunits of a corpus. A specific instantiation of this is called a `VCorpus`, which is the type we will use most often in this section.
 
 ```{r message = FALSE}
+# install.packages("tm")
 library(tm)
-docs   <- c('That guy is a buly.', 'That guy is a bully. Fixed that for you.', 'How dare you correct me.')
+docs   <- c('That guy is a bullying buly.', 'That guy is a bullying bully. Fixed that for you.', 'How dare you correct me.')
 corpus <- VCorpus(VectorSource(docs))
 ```
 
-`inspect` gives us summaries of the content of the corpus. We can also type of the name of the corpus and look at specific entries with `as.character`.
+`inspect` gives us summaries of the content of the corpus. We can also type the name of the corpus and look at specific entries with `as.character`.
 
 ```{r}
 inspect(corpus)
@@ -59,13 +60,15 @@ corpus <- tm_map(corpus, stemDocument)
 as.character(corpus[[2]])
 ```
 
-With these pre-processing operations, we can start explore some of the content of the messages. `tm` works on the `TermDocumentMatrix` and `DocumentTermMatrix` objects. As you may have guessed by the name, these objects are transposes of each other. These matrices are the building blocks of quantitative text analysis because they are the fundamental way we get from words to numbers. 
+With these pre-processing operations, we can start exploring some of the content of the messages. `tm` works on the `TermDocumentMatrix` and `DocumentTermMatrix` objects. As you may have guessed by the name, these objects are transposes of each other. These matrices are the building blocks of quantitative text analysis because they are the fundamental way we get from words to numbers. This matrix is also often referred to as `Document Feature Matrix` (e.g. in `quanteda`.)
 
 ```{r}
 tdm <- DocumentTermMatrix(corpus)
 tdm
 inspect(tdm)
 ```
+
+Each row represents a document and each column a unique word. The counts indicate the number of times that each word appears in each document.
 
 After all the pre-processing, there are not a lot of terms to work with -- 6 across 3 documents. Let's use the Humans of New York Facebook data from the first day. We'll save the bullying data for the final exercise.
 
@@ -77,8 +80,8 @@ hony     <- tm_map(hony, removeWords, stopwords("english"))
 hony     <- tm_map(hony, removePunctuation)
 hony     <- tm_map(hony, stripWhitespace)
 hony     <- tm_map(hony, stemDocument)
-tdm.hony <- TermDocumentMatrix(hony)
-tdm.hony
+dtm.hony <- DocumentTermMatrix(hony)
+dtm.hony
 ```
 
 This is much more interesting with documents and terms in the thousands. An brief explanation of the output from typing the name of the `TermDocumentMatrix`:
@@ -91,24 +94,25 @@ This is much more interesting with documents and terms in the thousands. An brie
 We can look at subsections of documents and terms with `inspect` and using R range notation. 
 
 ```{r}
-inspect(tdm.hony[750:760, 0:10])
+inspect(dtm.hony[0:10, 750:760])
 ```
 
 This matrix is large and by itself it is largely uninformative. But it now allows us to quantify the text in new ways. We can find the most frequent terms of the dataset using `findFreqTerms`. We will look for terms which appear at least 250 times.
 
 ```{r}
-findFreqTerms(tdm.hony, 250)
+findFreqTerms(dtm.hony, 250)
 ```
 
 Using the `wordcloud` package, we can visualize the most frequent words in the dataset.
 
 ```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
+# install.packages("wordcloud")
 library(wordcloud)
-m  <- as.matrix(tdm.hony)
-v  <- sort(rowSums(m), decreasing=TRUE)
-df <- data.frame(word = names(v), freq=v)
+m  <- as.matrix(dtm.hony) # convert the DTM to matrix
+v  <- sort(colSums(m), decreasing=TRUE) # extract word counts
+df <- data.frame(word = names(v), freq=v) # table with word frequencies
 
-wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 250, colors=brewer.pal(8, "Dark2"))
+wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 100, colors=brewer.pal(8, "Dark2"))
 ```
 
 The top terms in the wordcloud are pretty common: "one", "just", "like", "time", "get", "peopl". It does not seem to tell us much about the uniqueness of this dataset.
@@ -118,11 +122,11 @@ One way to get around that is to revisit the weighting scheme we used for the `T
 We can generate the wordcloud again using the tf-idf weighting.
 
 ```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
-m  <- as.matrix(weightTfIdf(tdm.hony))
-v  <- sort(rowSums(m), decreasing=TRUE)
+m  <- as.matrix(weightTfIdf(dtm.hony))
+v  <- sort(colSums(m), decreasing=TRUE)
 df <- data.frame(word = names(v), freq=v)
 
-wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 250, colors=brewer.pal(8, "Dark2"))
+wordcloud(df$word, df$freq, scale = c(4, .5), random.order = FALSE, max.words = 100, colors=brewer.pal(8, "Dark2"))
 ```
 
 This plot is a little more varied. Although the most common word is "seen", we also see "microfashion" and "today" as in the most popular words. We also see a lot of words which have low values (those in teal) to start to fall away and lose significance.
@@ -130,21 +134,27 @@ This plot is a little more varied. Although the most common word is "seen", we a
 As a final exercise in this section, we will have a look at comparing the wordclouds of two groups. To do that, we can split the Facebook posts in the two groups: those which have a number of likes above the median level of likes, and those which have them below that level. We then concatenate them into two large documents. We will skip removing stopwords and stemming due to processing time.
 
 ```{r fig.width=10, fig.height=8, message = FALSE, warning = FALSE}
+# Identify posts aboves and below median of likes
 df.hony.less_liked <- df.hony[df.hony$likes_count <  median(df.hony$likes_count),]
 df.hony.more_liked <- df.hony[df.hony$likes_count >= median(df.hony$likes_count),]
+# Create large documents with posts
 docs.less_liked    <- paste(df.hony.less_liked$message, collapse = " ")
 docs.more_liked    <- paste(df.hony.more_liked$message, collapse = " ")
+# Create DTM and preprocess
 hony.groups        <- VCorpus(VectorSource(c("Less" = docs.less_liked, "More" = docs.more_liked)))
 hony.groups        <- tm_map(hony.groups, content_transformer(tolower))
 hony.groups        <- tm_map(hony.groups, removePunctuation)
 hony.groups        <- tm_map(hony.groups, stripWhitespace)
-tdm.hony.groups    <- TermDocumentMatrix(hony.groups)
-
+dtm.hony.groups    <- DocumentTermMatrix(hony.groups)
 ## Label the two groups
-tdm.hony.groups$dimnames$Docs = c("Less Liked", "More Liked")
+dtm.hony.groups$dimnames$Docs = c("Less Liked", "More Liked")
+## Transpose matrix so that we can use it with comparison.cloud
+tdm.hony.groups <- t(dtm.hony.groups)
+## Compute TF-IDF transformation
+tdm.hony.groups <- as.matrix(weightTfIdf(tdm.hony.groups))
 
 ## Display the two word clouds
-comparison.cloud(as.matrix(weightTfIdf(tdm.hony.groups)))
+comparison.cloud(tdm.hony.groups, max.words=100, colors=c("red", "blue"))
 ```
 
 What seems to be different about the two of these wordclouds? What is the general subject matter of them?
