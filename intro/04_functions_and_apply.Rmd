@@ -1,14 +1,92 @@
 ---
-title: "Apply Functions"
+title: "Functions"
 author: "Pablo Barbera, Dan Cervone"
 date: "January 20, 2016"
 output: html_document
 ---
 
-Being designed for statistics and data analysis, `R` has powerful built-in functions for data manipulation. 
+Being designed for statistics and data analysis, `R` has powerful built-in functions for data manipulation. However, you can dramatically extend `R`'s functionality by writing your own functions.
 
-Content:
+### Making functions
 
-- apply functions (sapply, tapply, etc.)
-- defining your own functions
-- R packages
+`R` functions are objects just like the vectors and data frames we've worked with, so we create them using an assignment.
+
+```{r}
+times_2 <- function(x) x * 2
+times_2(6)
+times_2(1:5)
+```
+
+For longer functions, it's necessary to use curly braces `{}`. We can also input multiple objects into a function, and return more complex objects, such as a vector or list.
+
+```{r}
+two_numbers <- function(x, y) {
+  my_sum <- x + y
+  my_product <- x * y
+  my_ratio <- x / y
+  return(c(my_sum, my_product, my_ratio))
+}
+two_numbers(4, 11.93)
+```
+
+### Apply functions
+
+The `apply` group of functions apply a function over many objects simultaneously, returning the function results for each object in a vector or list. 
+
+#### sapply
+
+To see an example of this, let's return to the Daily Show guest list file. The `Show` variable gives the date of the show as a factor/character vector, which means it's not immediately easy for us to compute things like the total number of guests appearing in January in this data set. Using `sapply` it is simple to break the `Show` variable into two `Month` and `Day` variables (year would be redundant, as this is already a variable in the data frame).
+
+```{r}
+daily <- read.csv("./daily_show_guests.csv") # double check working directory
+show.split <- strsplit(as.vector(daily$Show), "/")
+show.split[1:5]
+```
+
+Splitting each entry in the `Show` variable gives us a list, where each entry in the list is a character vector giving the month, day, and year of the show (the characters delimited by "/"). To get a `Month` variable, we need a vector that has the first element of each vector in this list, and similarly for the `Day` variable.
+
+```{r}
+Month <- sapply(show.split, function(x) x[1])
+Day <- sapply(show.split, function(x) x[2])
+table(Month)
+table(Day)
+daily <- data.frame(daily, Month, Day)
+```
+
+Those familiar with Python might be reminded of the `map` function when using `sapply`, as the behavior is similar. 
+
+#### tapply
+
+Instead of iterating over a vector or list, `tapply` iterates over subsets of a data frame. These subsets group together rows with the same value for a "index" variable, and then for each subset, we apply a function to a different "evaluation" variable. For instance, let's find the year in which the first actor appeared on the Daily show. We can find the most first year for every guest type (`Group` variable) in just one line:
+
+```{r}
+min(daily$YEAR[which(daily$Group == "Academic")]) # "by hand"
+min(daily$YEAR[which(daily$Group == "Acting")])
+tapply(daily$YEAR, daily$Group, min)
+```
+
+Let's try a slightly more complicated example. Suppose we want to see, for each `Group`, which year had the most appearances. 
+
+```{r}
+academic.years <- table(daily$YEAR[which(daily$Group == "Academic")])
+academic.years
+academic.years[which.max(academic.years)]
+names(academic.years)[which.max(academic.years)]
+tapply(daily$YEAR, daily$Group, function(x) {
+  x.table <- table(x)
+  names(x.table)[which.max(x.table)]
+})
+```
+
+### R packages
+
+Lots of functions that aren't part of your base `R` installation have been included in external packages. For instance, some of the graphical utilities we'll explore later today require the package `ggplot2`
+
+```{r, message=FALSE}
+install.packages("ggplot2", repos="http://cran.rstudio.com/") # installs
+library(ggplot2)
+# help("ggplot2") # learn more about package
+# ?ggplot
+```
+
+Most `R` packages are hosted on the CRAN repository, which is well maintained and does a good job minimizing package conflicts, but you can also install from other repositories, including GitHub.

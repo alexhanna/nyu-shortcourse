@@ -24,13 +24,11 @@ Write commands that help you answer the following questions using the dataset `t
 
 ```
 
-
 3. Using this regression model, see if you can identify passengers who have been overcharged.
 
 ```{r}
 
 ```
-
 
 4. Add pickup and dropoff long/lat to your regression model, and use cross validation to check whether the predictive performance of the model is improved.
 

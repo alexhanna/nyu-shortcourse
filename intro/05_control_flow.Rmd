@@ -5,8 +5,78 @@ date: "January 20, 2016"
 output: html_document
 ---
 
-Content:
+Our introduction to `R` has focused on data manipulation, for which `R` is uniquely well suited as a programming language. However, `R` does all the things essential to writing programs in other languages; data analysis often requires or is eased by incorporating these tasks.
 
-- Loops
-- Ifs
-- Modularity and debugging
+### Loops
+
+"For" loops are probably the most common type of loop and are easily implemented in `R`. For instance, we can get the first 40 terms in the Fibonacci sequence using a for loop.
+
+```{r}
+fib <- c(0, 1, rep(NA, 38)) # initialize fib sequence
+for(i in 3:40) {
+  fib[i] <- fib[i-1] + fib[i-2]
+}
+```
+
+Note that most of the time that `sapply` can be used instead of a for loop, it will be faster. For instance we can create the `Month` variable for the Daily Show data using a for loop instead of `sapply`:
+
+```{r}
+daily <- read.csv("./daily_show_guests.csv") # double check working directory
+show.split <- strsplit(as.vector(daily$Show), "/")
+Month <- rep(NA, length(show.split)) # initialize Month variable
+for(i in 1:length(Month)) {
+  Month[i] <- show.split[[i]][1]
+}
+
+system.time(replicate(100, {
+  Month <- rep(NA, length(show.split))
+  for(i in 1:length(Month)) {
+    Month[i] <- show.split[[i]][1]
+  }
+}))
+system.time(replicate(100, {
+  sapply(show.split, function(x) x[1])
+}))
+```
+
+#### While loops
+
+Another common loop type is a "while" loops, which repeats indefinitely until some stopping condition is met (or alternatively, *while* a looping condition remains true). Such a loop is very useful, for instance, for determining convergence of a numerical algorithm. To illustrate this, let's calculate the logarithm of 0.1 using the Taylor series expansion 
+
+$$\log(x) = \sum_{n=1}^{\infty}\frac{(-1)^{n+1}}{n}(x - 1)^n$$
+
+```{r}
+x <- 0.1
+n <- 1
+abs.dif <- Inf
+value <- 0
+while(abs.dif > .000001 & n <= 1000) {
+  new.value <- value + (((-1) ^ (n + 1)) * (x - 1) ^ n) / n
+  abs.dif <- abs(new.value - value) # convergence check
+  value <- new.value
+  n <- n + 1
+}
+value
+log(0.1)
+n
+```
+
+#### If statements
+
+Depending on whether a condition is true or false, we might want to execute different chunks of code.
+
+```{r}
+compare_xy <- function(x, y) {
+  if (x < y) {
+    print("y is greater than x")
+  } else if (x > y) {
+    print("x is greater than y")
+  } else {
+    print("x and y are equal")
+  }
+}
+compare_xy(3, 4)
+compare_xy(4, 3)
+compare_xy(1, 1)
+```
+
