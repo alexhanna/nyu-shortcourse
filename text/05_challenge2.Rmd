@@ -1,0 +1,30 @@
+---
+title: "Challenge 1"
+author: Alex Hanna
+date: January 21, 2016
+output: html_document
+---
+
+[&laquo; Text Analysis Module](../text/README.md)
+
+Write commands that help you answer the following questions about the bullying dataset.
+
+1. What are the most popular words in the dataset, other than bullying words?
+```{r}
+
+```
+
+2. Create a wordcloud comparison between bullying tweets and non-bullying tweets.
+```{r}
+
+```
+
+3. There are five types of bullying traces that appear in the bullying dataset: accusation, cyberbullying, denial, report, and self-disclosure. Train, cross-validate, and test a model for classifying the `type` variable.
+```{r}
+
+```
+
+4. Create a topic model for tweets that mention bullying traces. Test the topic model with 10, 30, and 50 topics. What differences do you start to see when you change the number of topics?
+```{r}
+
+```
