@@ -946,6 +946,63 @@ hljs.initHighlightingOnLoad();
 </div>
 
 </section>
+<section data-transition="linear" data-transition-speed="default">
+<h3>APIs</h3>
+<div class="slideContent" >
+<p>API = Application Programming Interface; a set of structured https requests that return data in JSON or XML format.</p>
+
+<p class="fragment">Types of APIs:<br/>
+1. RESTful APIs: queries for static information at current moment (e.g. user profiles, posts, etc.)<br/>
+2. Streaming APIs: changes in users&#39; data in real time (e.g. new tweets, new FB posts&hellip;)  </p>
+
+<p class="fragment">Most APIs are rate-limited:</p>
+
+<ul>
+<li class="fragment">Restrictions on number of API calls by user/IP address and period of time.</li>
+</ul>
+
+</div>
+
+</section>
+<section data-transition="linear" data-transition-speed="default">
+<h3>Connecting with an API</h3>
+<div class="slideContent" >
+<p>Constructing a REST API call:</p>
+
+<ul>
+<li class="fragment">Baseline URL: <code>https://graph.facebook.com/</code></li>
+<li class="fragment">Parameters: <code>?ids=barackobama,johnmccain</code></li>
+<li class="fragment">Authentication token: <code>&amp;access_token=XXXXX</code></li>
+</ul>
+
+<p class="fragment">Response is often in JSON Format.</p>
+
+<p class="fragment">Authentication</p>
+
+<ul>
+<li class="fragment">Most common is an open standard called OAuth<br/></li>
+<li class="fragment">Connections without sharing username or password, only temporary tokens that can be refreshed<br/></li>
+<li class="fragment"><code>httr</code> package in R implements most cases (<a href="https://github.com/hadley/httr/tree/master/demo">examples</a>)</li>
+</ul>
+
+</div>
+
+</section>
+<section data-transition="linear" data-transition-speed="default">
+<h3>Social media APIs</h3>
+<div class="slideContent" >
+<p>R packages:</p>
+
+<ul>
+<li class="fragment">Twitter: <code>streamR</code> for streaming, <code>twitteR</code> or <code>smappR</code> for REST</li>
+<li class="fragment">Facebook: <code>Rfacebook</code></li>
+</ul>
+
+<p class="fragment">Many others on <a href="https://cran.r-project.org/web/views/WebTechnologies.html">CRAN Web Technologies Task View</a></p>
+
+</div>
+
+</section>
 
 
   </div>
