@@ -20,10 +20,6 @@
 * Kevin Munger
 * Peter Crosta
 * Varun D N
-<<<<<<< HEAD
-
-=======
->>>>>>> alexhanna/master
 
 ## Description
 
