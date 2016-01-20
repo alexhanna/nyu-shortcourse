@@ -47,7 +47,7 @@ The `oring` data set contains measurements on O-ring failures during NASA shuttl
 oring <- read.csv("./oring.csv")
 head(oring)
 oring$Y <- oring$Fail == "yes"
-mod <- glm(Y ~ Temperature + Pressure, data=oring)
+mod <- glm(Y ~ Temperature + Pressure, data=oring, family=binomial(logit))
 summary(mod)
 ```
 
@@ -56,5 +56,6 @@ summary(mod)
 To predict the probability of an O-ring failure during a temperature of 73 and pressure of 190, we would do
 
 ```{r}
-predict(mod, newdata=data.frame(Temperature=73, Pressure=190)) # predicted probability
+predict(mod, newdata=data.frame(Temperature=73, Pressure=190)) # prob in log-odds scale
+predict(mod, newdata=data.frame(Temperature=73, Pressure=190), type="response") # predicted probability
 ```
