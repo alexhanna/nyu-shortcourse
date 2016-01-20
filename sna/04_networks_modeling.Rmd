@@ -43,30 +43,3 @@ summary(reg3)
 exp(coef(reg3))
 ```
 
-Latent space model for networks
-```{r}
-# install.packages("latentnet")
-library(latentnet)
-lat <- ergmm(net ~ euclidean(d=1), verbose=TRUE, 
-             control=ergmm.control(sample.size = 100, burnin=100, interval = 1))
-
-test <- prcomp(as.matrix(g[])*1)
-
-library(ca)
-res <- ca(as.matrix(g[])*1)
-
-```
-
-
-```{r}
-#install.packages("NetData")
-library(NetData)
-data(studentnets.ergm173)
-edges <- edges[edges$alter_id %in% nodes$std_id,]
-g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
-net <- asNetwork(g)
-
-reg1 <- ergm(net ~ edges + mutual + nodematch("gnd") + nodematch("rce"))
-summary(reg1)
-
-```
