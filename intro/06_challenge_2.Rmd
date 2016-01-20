@@ -5,7 +5,7 @@ date: "January 20, 2016"
 output: html_document
 ---
 
-Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Try not to look at the previous code we used!
+Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Please read the data into `R` and answer the questions below.
 
 ```{r}
 

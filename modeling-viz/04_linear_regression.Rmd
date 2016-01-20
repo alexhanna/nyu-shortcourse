@@ -1,0 +1,116 @@
+---
+title: "Linear Regression"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Linear regression is a fundamental statistical model that can be used for a variety of data analysis tasks, including estimating the effect of one variable on another, and predicting a response given a collection of input data.
+
+### Mathematical overview
+
+A regression model relates a response variable $Y$ to an input variable $X$. Specifically, we assume that the expected value of $Y$ given $X$ is a linear function of $X$:
+
+$$E[Y|X] = \beta_0 + \beta_1 X$$
+
+In this model, $\beta_1$ represents the expected unit change in $Y$ for every unit change in $X$. For example, if $Y$ represents the revenue from a ski resort (in thousands of dollars) and $X$ represents the snow depth at the resort (in inches), then $\beta_1 = 6$ would suggest that each additional inch of snow is worth 6000 dollars to the ski resort, on average. $\beta_0$ represents the the expected revenue for the resort when there is no snow ($X = 0$). 
+
+In real problems, instead of knowing $\beta_0$ and $\beta_1$, we must estimate them from data. Imagine we have $(X,Y)$ measurements from 100 different days for a ski resort, denoted $(x_1, y_1), \ldots, (x_{100}, y_{100})$. We'll simulate these values in `R`:
+
+```{r}
+set.seed(0) # controls random number generation
+snow <- 1:100
+beta0 <- rnorm(1)   # a random number
+beta1 <- exp(rnorm(1))  # anoter random number
+revenue <- beta0 + beta1 * snow + 10 * rnorm(100) # add noise
+plot(snow, revenue)
+```
+
+The way we estimate $\beta_0$ and $\beta_1$, which give the best fit line to this data, is by *minimizing the residual sum of squares*:
+
+$$RSS(\beta_0, \beta_1) = \sum_{i=1}^{100} (y_i - ( \beta_0 + \beta_1 x_i))^2$$
+
+We can use calculus to solve for the best $\beta_0$ and $\beta_1$ values (those that minimize RSS), yet it is easier to just use `R`.
+
+### Fitting regressions in R
+
+To fit the regression model to our simulated ski resort data, we run
+
+```{r}
+mod <- lm(revenue ~ snow) # runs regression
+plot(snow, revenue)
+abline(mod)
+```
+
+As we can see from the plot, the regression line provides a pretty good fit for the data.
+
+#### Inference
+
+Let's look at the estimates for $\beta_0, \beta_1$:
+
+```{r}
+summary(mod)
+```
+
+The "Estimate" column of the "Coefficients" table gives estimates of $\beta_0$ and $\beta_1$, respectively. In the next column, the "Std. Error" is the statistical error in these estimates, which gets smaller as we get more and more data. The fact that $\beta_0$ (the intercept) is estimated to be about 0.7, but the standard error is around 1.8, means that we don't have strong evidence to say that $\beta_0 > 0$. This is formalized by the $p$-value for the statistical hypothesis test of $\beta_0 = 0$, which is given by the rightmost column (in this case, the $p$-value is 0.68). On the other hand, we have very strong evidence that $\beta_1 > 0$, given that its standard error is low relative to the estimated effect size (and the $p$-value is very low). 
+
+#### Model checking
+
+Linear regression is powerful and easy to implement, but it doesn't always fit the data well. When this is the case, it's important to diagnose, because otherwise you can't trust the conclusions from your regression fit. 
+
+For instance, outliers can dramatically affect regression results
+
+```{r}
+revenue[98] <- 5000
+mod2 <- lm(revenue ~ snow)
+plot(snow, revenue)
+abline(mod2)
+plot(snow, revenue, ylim=c(0, 100))
+abline(mod2)
+```
+
+Also, the underlying relationship between $Y$ and $X$ may not be linear. You can usually diagnose a poor linear fit by looking at a residual plot. There should be no patterns in the residuals when plotted against the input variable (they should look like pure noise). 
+
+
+```{r}
+set.seed(0) # controls random number generation
+snow <- 1:100
+beta0 <- rnorm(1)   # a random number
+beta1 <- exp(rnorm(1))  # anoter random number
+revenue <- beta0 + beta1 * (snow ^ 2) + 200 * rnorm(100) # log of snow
+mod <- lm(revenue ~ snow)
+plot(snow, residuals(mod)) # any patterns?
+snow.squared <- snow ^ 2
+mod <- lm(revenue ~ snow.squared)
+plot(snow.squared, residuals(mod)) # any patterns?
+
+```
+
+### Prediction
+
+A powerful feature of linear regression models is that they allow us to predict a response $Y^*$ given a new input $X^*$:
+
+$$Y^* = \beta_0 + \beta_1 X^*$$
+
+Using `R` let's predict the ski resorts revenue when there are 13.7 inches of snow:
+
+```{r}
+predict(mod, newdata=data.frame(snow.squared = 13.7^2))
+predict(mod, newdata=data.frame(snow.squared = 13.7^2), interval="prediction")
+```
+
+### Multiple regression
+
+Linear regression can be used when there is more than one input variable:
+
+$$E[Y | X, W, V] = \beta_0 + \beta_1 X + \beta_2 W + \beta_3 V$$
+
+To make this happen in `R`, we just add these extra terms to the formula used in the `lm` command. For example, let's read in some data on basketball players' shooting performance along with their height and weight. 
+
+```{r}
+bball <- read.csv("./bball.csv")
+mod <- lm(pts ~ height + weight + fg.pct + ft.pct, data=bball)
+summary(mod)
+```
+
+How do we interpret the coefficient estimates for multiple linear regression?

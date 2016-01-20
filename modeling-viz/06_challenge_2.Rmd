@@ -30,7 +30,7 @@ Write commands that help you answer the following questions using the dataset `t
 
 ```
 
-4. Add pickup and dropoff long/lat to your regression model, and use cross validation to check whether the predictive performance of the model is improved.
+4. What fare do you predict for a solo passenger traveling 2.1 miles in a trip lasting 14 minutes?
 
 ```{r}
 

@@ -1,0 +1,83 @@
+---
+title: "Graphics and Data Visualization"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+We've already seen the `plot` function; there are a few other base `R` functions for quickly and easily displaying data. 
+
+```{r}
+drivers <- read.csv("./bad-drivers.csv")
+names(drivers) # variable names are too long!
+names(drivers) <- c("state", "fatal", "speeding", 
+                    "alcohol", "not.distracted", "no.prev",
+                    "premium", "losses")
+plot(drivers$premium, drivers$losses, xlab="premiums", ylab="losses", main="state insurance losses vs premiums")
+hist(drivers$fatal, xlab="Fatalities per billion person-miles", main="Distribution of fatality rates by state")
+```
+
+Functions like `plot` and `hist` are great for quickly displaying data, and are incredibly helpful throughout data exploration. Yet these graphics are not very aesthetic, and are limited in the quantity and media of information conveyed. While there are many methods in base `R` to build on these types of graphics, an alternative and very popular graphics library for `R` is the package `ggplot2` (which we already installed). 
+
+### Quick Plots
+
+`qplot` stands for "quick plot" and behaves very similarly to base `R`'s `plot`. However, it is straightforward to add layers of information. 
+
+```{r}
+library(ggplot2)
+qplot(premium, losses, data=drivers, xlab="premiums", ylab="losses", main="state insurance losses vs premiums")
+qplot(premium, losses, data=drivers, xlab="premiums", ylab="losses", main="state insurance losses vs premiums", color=fatal)
+qplot(premium, losses, data=drivers, xlab="premiums", ylab="losses", main="state insurance losses vs premiums", color=fatal, size=I(5))
+qplot(premium, losses, data=drivers, xlab="premiums", ylab="losses", main="state insurance losses vs premiums", color=fatal, size=speeding)
+```
+
+### Mappings
+
+Full functionality of `ggplot2` revolves around the concept of aesthetic mappings, which describe how data are represented visually in a graph or map. We can redo the above analysis using some of these ideas.
+
+```{r}
+myplot <- ggplot(data=drivers, 
+                 mapping=aes(premium, losses, color=fatal, size=speeding))
+myplot # hmm....
+myplot + geom_point() # add layers with "+"
+myplot + geom_line() # looks cool but meaningless?
+textplot <- myplot + labs(x="premiums", y="losses") + 
+  ggtitle("state insurance losses vs premiums") + 
+  geom_text(mapping=aes(premium, losses, label=state), data=drivers)
+textplot # something different
+textplot + scale_color_gradient(low="blue", high="red") # different colors
+```
+
+### Geographical data
+
+We can plot maps of geographical regions, such as the US, and overlay state-specific data. First, to get a map of the US looking nice, we can do:
+
+```{r, message=FALSE}
+install.packages("maps", repos="http://cran.rstudio.com")
+states <- map_data("state") # long/lat information for all states
+head(states)
+statemap <- ggplot(states, aes(x=long, y=lat, group=group)) + 
+  geom_polygon(fill="grey65", color="white", size = 0.2) + # state colors/borders
+  theme_bw() + # no background grid
+  coord_map("mercator") # flat projection from sphere of US area
+statemap
+```
+
+Let's use this as a foundation to plot some of the variables in the drivers data, to see if there are any geographical trends. First, note that the `states` data set uses lowercase letters only for states in the `region` variable, so let's modify the drivers data to include a lowercase `region` variable for easy cross referencing.
+
+```{r}
+drivers$region <- tolower(drivers$state) # region variable is automatically added
+states_drivers <- merge(states, drivers, by="region")
+head(states_drivers)
+```
+
+Now that the driving statistics are part of the states data set, we can incorporate them as layers in our states map.
+
+```{r}
+statemap <- ggplot(states_drivers, aes(x=long, y=lat, group=group, fill=alcohol)) + 
+  geom_polygon(color="white", size = 0.2) + 
+  theme_bw() + 
+  guides(fill=guide_legend(title="alcohol crash %")) +
+  coord_map("mercator")
+statemap
+```

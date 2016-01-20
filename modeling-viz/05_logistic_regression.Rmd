@@ -1,0 +1,60 @@
+---
+title: "Logistic Regression"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Logistic regression is like linear regression, except instead of modeling a continuous response variable as $Y$, we model a binary (0/1) variable. Because binary data are so common (for instance, in survey responses or classification), logistic regression is another powerful tool for data analysis, despite the fact that linear regression can still technically be used when $Y$ is binary.
+
+### Mathematical setup
+
+The mathematical setup for logistic regression is to assume
+
+$$ P(Y = 1 | X) = p(X)$$
+$$ \log \left( \frac{p(X)}{1 - p(X)} \right) = \beta_0 + \beta_1 X $$
+
+The function $f(x) = \log(x / (1-x))$ is known as the logit function; thus the *logit* of $P(Y = 1 | X)$ is a linear function of $X$. Note that because $0 < p(X) < 1$, $\text{logit}(p(X))$ can be any real number. Similarly, the "inverse logit" of any real number lies in $(0, 1)$.
+
+```{r}
+p <- seq(.0001, .9999, .0001)
+logit.p <- log(p / (1-p))
+plot(p, logit.p, type="l")
+```
+
+If we were to just use linear regression on binary data, we run the risk of predicting values for $Y$ that are not in $(0, 1)$---this is one of the advantages of logistic regression.
+
+#### Interpreting coefficients
+
+Unlike linear regression, coefficients (such as $\beta_1$) for logistic regression do not have an elegant interpretation. Positive values of $\beta_1$ mean that a unit increase in $X$ yields a higher predicted probability of $Y = 1$, yet the magnitude of this probability increase depends on the value of $X$. For instance, assuming $\beta_0 = 0$ and $\beta_1 = 1$, we get:
+
+```{r}
+x <- 0:5
+beta.0 <- 0
+beta.1 <- 1
+logit.p <-  beta.0 + beta.1 * x
+p <- exp(logit.p) / (1 + exp(logit.p))
+p
+```
+
+Usually, the best we can say is that a unit increase in $X$ increases the log-odds of $Y$ (log-odds = logit) by $\beta_1$.
+
+### R example
+
+The `oring` data set contains measurements on O-ring failures during NASA shuttle launches. We can model O-ring failures using logistic regression
+
+```{r}
+oring <- read.csv("./oring.csv")
+head(oring)
+oring$Y <- oring$Fail == "yes"
+mod <- glm(Y ~ Temperature + Pressure, data=oring)
+summary(mod)
+```
+
+#### Prediction
+
+To predict the probability of an O-ring failure during a temperature of 73 and pressure of 190, we would do
+
+```{r}
+predict(mod, newdata=data.frame(Temperature=73, Pressure=190)) # predicted probability
+```

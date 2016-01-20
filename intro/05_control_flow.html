@@ -91,12 +91,12 @@ system.time(replicate(100, {
   }
 }))</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.373   0.000   0.373</code></pre>
+##   0.362   0.000   0.361</code></pre>
 <pre class="r"><code>system.time(replicate(100, {
   sapply(show.split, function(x) x[1])
 }))</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.269   0.008   0.276</code></pre>
+##   0.243   0.004   0.247</code></pre>
 <div id="while-loops" class="section level4">
 <h4>While loops</h4>
 <p>Another common loop type is a “while” loops, which repeats indefinitely until some stopping condition is met (or alternatively, <em>while</em> a looping condition remains true). Such a loop is very useful, for instance, for determining convergence of a numerical algorithm. To illustrate this, let’s calculate the logarithm of 0.1 using the Taylor series expansion</p>
