@@ -1,0 +1,99 @@
+---
+title: "Scraping data from APIs"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+### Scraping web data from APIs
+
+```{r}
+base_url <- "http://api.nytimes.com/svc/search/v2/articlesearch.json"
+library(httr)
+r <- GET(base_url, query=list(q="inequality", "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177'))
+cat(substr(content(r, 'text'), 1, 500))
+```
+
+```{r}
+json <- content(r, 'parsed')
+names(json)
+json$status
+names(json$response)
+json$response$meta
+```
+
+```{r}
+r <- GET(base_url, query=list(q="inequality",
+                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "begin_date"=20140101,
+                              "end_date"=20141231))
+json <- content(r, 'parsed')
+json$response$meta
+```
+
+```{r}
+nyt_count <- function(q, yearinit, yearend){
+  years <- seq(yearinit, yearend)
+  counts <- rep(NA, length(years))
+  for (i in 1:length(years)){
+    message(years[i])
+    r <- GET(base_url, query=list(q=q,
+                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "begin_date"=paste0(years[i], "0101"),
+                              "end_date"=paste0(years[i], "1231")))
+    json <- content(r, 'parsed')
+    while (is.null(json$response)){
+      Sys.sleep(2)
+      r <- GET(base_url, query=list(q=q,
+                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "begin_date"=paste0(years[i], "0101"),
+                              "end_date"=paste0(years[i], "1231")))
+      json <- content(r, 'parsed')
+    }
+    counts[i] <- json$response$meta$hits
+  }
+  return(counts)
+}
+```
+
+
+```{r}
+counts <- nyt_count(q="inequality", yearinit = 1950, yearend = 2014)
+plot(1950:2014, counts, type="l", main="Mentions of 'inequality' on the NYT, by year",
+     xlab="Year", ylab="Article count")
+```
+
+
+```{r}
+nyt_count <- function(q, init, end, by){
+  dates <- seq(from=init, to=end, by=by)
+  dates <- format(dates, "%Y%m%d")
+  counts <- rep(NA, length(dates)-1)
+  for (i in 1:(length(dates)-1)){
+    message(dates[i])
+    r <- GET(base_url, query=list(q=q,
+                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "begin_date"=dates[i],
+                              "end_date"=dates[i+1]))
+    json <- content(r, 'parsed')
+    while (is.null(json$response)){
+      Sys.sleep(2)
+      r <- GET(base_url, query=list(q=q,
+                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "begin_date"=dates[i],
+                              "end_date"=dates[i+1]))
+      json <- content(r, 'parsed')
+    }
+    counts[i] <- json$response$meta$hits
+  }
+  return(data.frame(date = dates[-length(dates)], count = counts))
+}
+
+```
+
+```{r}
+counts <- nyt_count(q="donald trump", init = as.Date("2014/01/01"), end = as.Date("2016/01/15"), by="month")
+counts$date <- as.Date(counts$date, format="%Y%m%d")
+plot(counts$date, counts$count, type="l", main="Mentions of 'trump' on the NYT, by month",
+     xlab="Month", ylab="Article count")
+```

@@ -1,0 +1,300 @@
+---
+title: "Scraping data from social media"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+### Scraping web data from Facebook
+
+```{r}
+#install.packages("Rfacebook")
+library(Rfacebook)
+```
+
+To get access to the Facebook API, you need an OAuth code. You can get yours going to the following URL: [https://developers.facebook.com/tools/explorer](https://developers.facebook.com/tools/explorer)
+
+Once you're there:  
+1. Click on "Get Access Token"  
+2. Copy the long code ("Access Token") and paste it here below, substituting the fake one I wrote:
+
+```{r,eval=FALSE}
+fb_oauth = 'XXXXXXXYYYYYYZZZZZZ11111'
+```
+
+Now try running the following line:
+```{r}
+getUsers("me", token=fb_oauth, private_info=TRUE)
+```
+
+Does it return your Facebook public information? Yes? Then we're ready to go. See also `?fbOAuth` for information on how to get a long-lived OAuth token.
+
+At the moment, the only information that can be scraped from Facebook is the content of public pages. Let's start with the posts of the page of Barack Obama, for example.
+
+The following line downloads the ~100 most recent posts on the facebook page of Barack Obama
+```{r}
+page <- getPage("barackobama", token=fb_oauth, n=100) 
+```
+
+What information is available for each of these posts?
+```{r}
+page[1,]
+```
+
+Which post got more likes, more comments, and more shares?
+```{r}
+page[which.max(page$likes_count),]
+page[which.max(page$comments_count),]
+page[which.max(page$shares_count),]
+```
+
+We can also subset by date. For example, imagine we want to get all the posts from October 2012
+```{r}
+page <- getPage("barackobama", token=fb_oauth, n=1000,
+	since='2012/10/01', until='2012/10/30')
+page[which.max(page$likes_count),]
+```
+
+And if we need to, we could also extract the specific comments from each post.
+```{r}
+post_id <- page$id[which.max(page$likes_count)]
+post <- getPost(post_id, token=fb_oauth, n.comments=1000, likes=FALSE)
+```
+This is how you can view those comments:
+```{r}
+comments <- post$comments
+head(comments)
+```
+Also, note that users can like comments! What is the comment that got the most likes?
+```{r}
+comments[which.max(comments$likes_count),]
+```
+
+### Scraping web data from Twitter
+
+#### Authenticating
+
+Follow these steps to create your token:
+
+1. Go to apps.twitter.com and sign in.  
+2. Click on "Create New App". You will need to have a phone number associated with your account in order to be able to create a token.  
+3. Fill name, description, and website (it can be anything, even http://www.google.com). Make sure you leave 'Callback URL' empty.
+4. Agree to user conditions.  
+5. From the "Keys and Access Tokens" tab, copy consumer key and consumer secret and paste below
+
+```{r, eval=FALSE}
+# install.packages("ROAuth")
+library(ROAuth)
+requestURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+consumerKey <- "XXXXXXXXXXXX"
+consumerSecret <- "YYYYYYYYYYYYYYYYYYY"
+
+my_oauth <- OAuthFactory$new(consumerKey=consumerKey,
+  consumerSecret=consumerSecret, requestURL=requestURL,
+  accessURL=accessURL, authURL=authURL)
+```
+
+Run the below line and go to the URL that appears on screen. Then,type the PIN into the console (RStudio sometimes doesn't show what you're typing, but it's there!)
+
+```{r, eval=FALSE}
+my_oauth$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+```
+
+Now you can save oauth token for use in future sessions with smappR or streamR. Make sure you save it in a folder where this is the only file.
+
+```{r, eval=FALSE}
+save(my_oauth, file="~/git/data-science-workshop/scraping/credentials/twitter-token.Rdata")
+```
+
+#### Collecting data from Twitter's Streaming API
+
+Collecting tweets filtering by keyword:
+
+```{r}
+#install.packages("streamR")
+library(streamR)
+load("~/git/data-science-workshop/scraping/credentials/twitter-token.Rdata")
+filterStream(file.name="palin-tweets.json", track="palin", 
+    timeout=30, oauth=my_oauth)
+```
+
+Note the options:
+- `file.name` indicates the file in your disk where the tweets will be downloaded  
+- `track` is the keyword(s) mentioned in the tweets we want to capture.
+- `timeout` is the number of seconds that the connection will remain open  
+- `oauth` is the OAuth token we are using
+
+Once it has finished, we can open it in R as a data frame with the `parseTweets` function
+```{r}
+tweets <- parseTweets("palin-tweets.json")
+str(tweets)
+```
+
+And this is how we would capture tweets mentioning multiple keywords:
+```{r}
+filterStream(file.name="political_tweets.json", 
+	track=c("obama", "bush", "clinton", "trump"),
+    tweets=50, oauth=my_oauth)
+```
+
+Note that here I choose a different option, `tweets`, which indicates how many tweets (approximately) the function should capture before we close the connection to the Twitter API.
+
+This second example shows how to collect tweets filtering by location instead. In other words, we can set a geographical box and collect only the tweets that are coming from that area.
+
+For example, imagine we want to collect tweets from the United States. The way to do it is to find two pairs of coordinates (longitude and latitude) that indicate the southwest corner AND the northeast corner. Note the reverse order: it's not (lat, long), but (long, lat).
+
+In the case of the US, it would be approx. (-125,25) and (-66,50). How to find these coordinates? I use: `http://itouchmap.com/latlong.html`
+
+```{r}
+filterStream(file.name="tweets_geo.json", locations=c(-125, 25, -66, 50), 
+    timeout=30, oauth=my_oauth)
+```
+
+We can do as before and open the tweets in R
+```{r}
+tweets <- parseTweets("tweets_geo.json")
+```
+
+And use the maps library to see where most tweets are coming from. Note that there are two types of geographic information on tweets: `lat`/`lon` (from geolocated tweets) and `place_lat` and `place_lon` (from tweets with place information). We will work with whatever is available.
+```{r}
+library(maps)
+tweets$lat <- ifelse(is.na(tweets$lat), tweets$place_lat, tweets$lat)
+tweets$lon <- ifelse(is.na(tweets$lon), tweets$place_lon, tweets$lon)
+states <- map.where("state", tweets$lon, tweets$lat)
+head(sort(table(states), decreasing=TRUE))
+```
+
+We can also prepare a map of the exact locations of the tweets.
+
+```{r, fig.height=4, fig.width=10}
+#install.packages("ggplot2")
+library(ggplot2)
+
+## First create a data frame with the map data 
+map.data <- map_data("state")
+
+# And we use ggplot2 to draw the map:
+# 1) map base
+ggplot(map.data) + geom_map(aes(map_id = region), map = map.data, fill = "grey90", 
+    color = "grey50", size = 0.25) + expand_limits(x = map.data$long, y = map.data$lat) + 
+    # 2) limits for x and y axis
+    scale_x_continuous(limits=c(-125,-66)) + scale_y_continuous(limits=c(25,50)) +
+    # 3) adding the dot for each tweet
+    geom_point(data = tweets, 
+    aes(x = lon, y = lat), size = 1, alpha = 1/5, color = "darkblue") +
+    # 4) removing unnecessary graph elements
+    theme(axis.line = element_blank(), 
+    	axis.text = element_blank(), 
+    	axis.ticks = element_blank(), 
+        axis.title = element_blank(), 
+        panel.background = element_blank(), 
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        plot.background = element_blank()) 
+```
+
+
+Finally, it's also possible to collect a random sample of tweets. That's what the "sampleStream" function does:
+
+```{r}
+sampleStream(file.name="tweets_random.json", timeout=30, oauth=my_oauth)
+```
+
+Here I'm collecting 30 seconds of tweets. And once again, to open the tweets in R...
+```{r}
+tweets <- parseTweets("tweets_random.json")
+```
+
+What is the most retweeted tweet?
+```{r}
+tweets[which.max(tweets$retweet_count),]
+```
+
+What are the most popular hashtags at the moment? We'll use regular expressions to extract hashtags.
+```{r}
+library(stringr)
+ht <- str_extract_all(tweets$text, "#(\\d|\\w)+")
+ht <- unlist(ht)
+head(sort(table(ht), decreasing = TRUE))
+```
+
+How many tweets mention Justin Bieber?
+```{r}
+length(grep("bieber", tweets$text, ignore.case=TRUE))
+```
+
+
+#### Collecting data from Twitter's REST API
+
+Collecting recent tweets (less than 7 days old)
+```{r}
+#install.packages("devtools")
+library(devtools)
+#install_github("SMAPPNYU/smappR")
+library(smappR)
+
+searchTweets(q="palin", filename="palin-tweets.json",
+  n=200, until="2016-01-19", result_type="popular",
+  oauth_folder="~/git/data-science-workshop/scraping/credentials")
+
+tweets <- parseTweets("palin-tweets.json")
+```
+
+You can check the documentation about the options for string search [here](https://dev.twitter.com/rest/public/search).
+
+Extracting information from user profiles
+```{r}
+reps <- c("RealBenCarson", "tedcruz", "CarlyFiorina", "GrahamBlog", 
+    "GovMikeHuckabee", "GovernorPataki", "RandPaul", "marcorubio", 
+    "RickSantorum", "bobbyjindal", "GovernorPerry", "realDonaldTrump",
+    "JebBush", "GovChristie", "JohnKasich", "ScottWalker", 
+    "gov_gilmore")
+dems <- c('HillaryClinton', 'SenSanders', "MartinOMalley",
+    "LincolnChafee", "JimWebbUSA")
+candidates <- c(reps, dems)
+
+users <- getUsersBatch(screen_names=candidates,
+                       oauth_folder="~/git/data-science-workshop/scraping/credentials")
+str(users)
+```
+
+Who is the candidate with the most followers?
+```{r}
+users[which.max(users$followers_count),]
+```
+
+Download up to 3,200 recent tweets from a Twitter account
+```{r}
+getTimeline(filename="trump-tweets.json", screen_name="realDonaldTrump", 
+    n=1000, oauth_folder="~/git/data-science-workshop/scraping/credentials")
+```
+
+What are the most common hashtags?
+```{r}
+tweets <- parseTweets("trump-tweets.json")
+ht <- str_extract_all(tweets$text, "#(\\d|\\w)+")
+ht <- unlist(ht)
+head(sort(table(ht), decreasing = TRUE))
+```
+
+
+Download friends and followers
+```{r}
+followers <- getFollowers("NYUdatascience", 
+    oauth_folder="~/git/data-science-workshop/scraping/credentials")
+```
+
+What are the most common words that followers of NYUDataScience use to describe themselves on Twitter?
+```{r}
+users <- getUsersBatch(ids=followers,
+    oauth_folder="~/git/data-science-workshop/scraping/credentials")
+wf <- word.frequencies(users$description[users$description!=""])
+library(wordcloud)
+wordcloud(words = names(wf), freq = wf, max.words = 50, rot.per = 0)
+```
+
+
+
