@@ -13,8 +13,8 @@ As an example for these methods, we'll be using data and methods drawn from a [c
 
 ## Subsections
 
-* [Text handling and keyword search](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/text/01_intro.html)
-* [Exercise 1](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/text/02_challenge1.html)
-* [Text preprocessing](https://github.com/alexhanna/nyu-shortcourse/blob/master/text/03_preprocessing.Rmd)
-* [Machine learning methods](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/text/04_machine_learning.html)
-* [Exercise 2](http://htmlpreview.github.io/?https://github.com/alexhanna/nyu-shortcourse/blob/master/text/05_challenge2.html)
+* [Text handling and keyword search](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/text/01_intro.html)
+* [Exercise 1](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/text/02_challenge1.html)
+* [Text preprocessing](https://github.com/pablobarbera/data-science-workshop/blob/master/text/03_preprocessing.Rmd)
+* [Machine learning methods](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/text/04_machine_learning.html)
+* [Exercise 2](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/text/05_challenge2.html)

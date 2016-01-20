@@ -102,3 +102,41 @@ incremental: false
 
 [Population by Age Groups and Sex, U.S. Census](http://www.census.gov/population/international/data/idb/region.php?N=%20Results%20&T=10&A=separate&RT=0&Y=2016&R=-1&C=US)
 
+APIs
+========================================================
+
+API = Application Programming Interface; a set of structured https requests that return data in JSON or XML format.
+
+Types of APIs:  
+1. RESTful APIs: queries for static information at current moment (e.g. user profiles, posts, etc.)  
+2. Streaming APIs: changes in users' data in real time (e.g. new tweets, new FB posts...)  
+
+Most APIs are rate-limited:
+- Restrictions on number of API calls by user/IP address and period of time.
+
+Connecting with an API
+========================================================
+
+Constructing a REST API call:
+- Baseline URL: `https://graph.facebook.com/`
+- Parameters: `?ids=barackobama,johnmccain`
+- Authentication token: `&access_token=XXXXX`
+
+Response is often in JSON Format.
+
+Authentication
+- Most common is an open standard called OAuth  
+- Connections without sharing username or password, only temporary tokens that can be refreshed  
+- `httr` package in R implements most cases ([examples](https://github.com/hadley/httr/tree/master/demo))
+
+Social media APIs
+========================================================
+
+R packages:
+- Twitter: `streamR` for streaming, `twitteR` or `smappR` for REST
+- Facebook: `Rfacebook`
+
+Many others on [CRAN Web Technologies Task View](https://cran.r-project.org/web/views/WebTechnologies.html)
+
+
+

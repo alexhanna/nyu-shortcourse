@@ -1,0 +1,41 @@
+---
+title: "Scraping: Challenge 2"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+The purpose of this challenge is to analyze the social media posts of the current Republican and Democratic candidates for president. To facilitate the data collection, focus on only two of them. If there's time at the end of this challenge, you can add a few more.
+
+Let's start with Twitter: download their most recent 1,000 tweets.
+
+```{r}
+```
+
+Now read their tweets. What are the 10 most popular hashtags for each of them?
+```{r}
+
+```
+
+Prepare a comparison cloud showing what words are they using with different frequency. Note that in this case we probably don't want to get rid of punctuation. What do you learn?
+```{r}
+
+```
+
+Now turn to Facebook and scrape the most recent 1,000 posts from each candidates' page. Note that this can take a couple of minutes.
+```{r, eval=FALSE}
+
+```
+
+This time, let's focus on their relative popularity. How many likes, comments, and shares do each of these candidates receive on their posts, on average? Who is more popular?
+```{r}
+```
+
+Finally, examine whether there is any trend on their popularity over time by creating a figure that displays the average number of likes receive on their post by month. (As a clue, I have added some code to extract the month in a format that you could then plot.)
+```{r}
+page$month <- as.Date(paste0(substr(page$created_time, 1, 7), '-01'))
+
+```
+
+
+

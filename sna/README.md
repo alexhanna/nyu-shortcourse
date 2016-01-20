@@ -1,46 +1,16 @@
+[&laquo; Schedule](../README.md#schedule)
 
-why networks
+# Social Network Analysis
 
-basic definitions [with examples]: 
-	- nodes/vertices
-	- edges/arc, weights
-	- undirected vs directed [explain with igraph]
-	- graph
+## Subsections
 
-networks as data: 
-	- adjacency matrices
-	- edgelist + node information -> reading data about networks
+* [Introduction to social network analysis with R](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/01_networks_intro.html) and [code](https://github.com/pablobarbera/data-science-workshop/blob/master/sna/01_networks_intro.Rmd)
+* [Social network analysis with R: node and network properties](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/02_networks_descriptive.html) and [code](https://github.com/pablobarbera/data-science-workshop/blob/master/sna/02_networks_descriptive.Rmd)
+* [Challenge 1](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/sna/03_challenge_1.Rmd) with [solution](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/sna/03_challenge_1_solution.html).
+* [Social network analysis with R: modeling](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/04_networks_modeling.html) and [code](https://github.com/pablobarbera/data-science-workshop/blob/master/sna/04_networks_modeling.Rmd)
+* [Challenge 2](http://htmlpreview.github.io/?https://github.com/pablobarbera/data-science-workshop/blob/master/sna/05_challenge_2.Rmd) with [solution](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/sna/05_challenge_2.html).
 
-network visualization: 
-	- layouts
-	- modifying node properties
-	- adding labels
-	- adding legends
-	- dynamic visualization
-
-node-level properties, measuring importance of nodes: 
-	- degree (indegree, outdegree...)
-	- centrality (betweenness, closeness, pagerank)
-	- diameter, mean_distance
-
-network-level properties: 
-	- reciprocity
-	- transitivity/clustering
-	- connected components
-	- giant component
-	- community detection 
-	- k-core
-
-network modeling: 
-	- measuring assortativity, homophily
-	- ergm
-	- simulation
-
-random network models: 
-	- erdos-renyi (random)
-	- watts-strogatz (small-world)
-	- barabasi-albert (preferential attachment, power law)
-
+## Additional resources
 
 Part of the materials here are based on the following resources:
 - [Network Analysis and Visualization with R and igraph](http://kateto.net/netscix2016), by [Katherine Ognyanova](http://kateto.net/)
