@@ -1,5 +1,5 @@
 ---
-title: "Challenge 1"
+title: "Challenge 2"
 author: Alex Hanna
 date: January 21, 2016
 output: html_document

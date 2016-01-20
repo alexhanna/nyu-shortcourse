@@ -7,7 +7,7 @@
 - [Challenge 1: scraping the FDA website to analyze product recalls](https://github.com/pablobarbera/data-science-workshop/blob/master/scraping/04_challenge_1.Rmd)) with [solution](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/scraping/04_challenge_1_solution.html).
 - [What is an API? Example: scraping the New York Times API](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/scraping/05_apis.html) and [code](https://github.com/pablobarbera/data-science-workshop/blob/master/scraping/05_apis.Rmd)
 - [Collecting and analyzing social media data](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/scraping/06_social_media.html) and [code](https://github.com/pablobarbera/data-science-workshop/blob/master/scraping/06_social_media.Rmd)
-- [Challenge 2: what do presidential candidates tweet about?](https://github.com/pablobarbera/data-science-workshop/blob/master/scraping/07_challenge_2.Rmd)) with [solution](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/scraping/07_challenge_2_solution.html).
+- [Challenge 2: what do presidential candidates tweet about?](https://github.com/pablobarbera/data-science-workshop/blob/master/scraping/07_challenge_2.Rmd) with [solution](http://htmlpreview.github.io/?https://raw.githubusercontent.com/pablobarbera/data-science-workshop/master/scraping/07_challenge_2_solution.html).
 
 For more on scraping and APIs, I recommend:
 - [Automated Data Collection with R](http://www.r-datacollection.com/), by Simon Munzert, Christian Rubba, Peter Meissner, and Dominic Nyhuis.
