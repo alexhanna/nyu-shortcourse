@@ -1,0 +1,82 @@
+---
+title: "Challenge 2"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
+date: "January 21, 2016"
+output: html_document
+---
+
+In this challenge you will work with a dataset about classroom interactions. The goal is to understand the extent to which homophily explains friendships across students.
+
+First, let's load the dataset, which is available in the NetData package.
+
+
+```{r}
+#install.packages("NetData")
+library(NetData)
+data(studentnets.ergm173)
+str(nodes)
+str(edges)
+```
+
+You can read the codebook by typing: `?NetData::nodes`
+
+The student-level variables are:    
+- `std_id`: student ID  
+- `gnd`: gender (1 = male, 2 = female)  
+- `grd`: grade (always 10th)  
+- `rce`: race (1 = Hispanic, 2 = Asian, 3 = African-American, 4 = White)  
+- `per_cap_inc`: per capita income from the 1990 census  
+
+The edge-level variables are:  
+- `ego_id` and `alter_id` are the source and target of the edge  
+- `sem1_friends` and `sem2_friends` indicate responses to friendship survey in semesters 1 and 2(0 = not friends, 1 = friend, 2 = best friends)  
+- `sem1_wtd_dicht_seat` indicates whether students were seating next to each other  
+
+Our goal will be to explain friendships in the first semester, so we will keep only edges where `sem1_friends>0`.
+
+```{r}
+edges <- edges[edges$sem1_friend>0,]
+```
+
+Now we can create the igraph object
+
+```{r, eval=FALSE}
+library(igraph)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+```
+
+Here you will get an error. Why? Some students name as friends other students in different classrooms. We'll get rid of those edges and try again. How many nodes and edges does this network have? Visualize it to see what else you learn.
+
+```{r}
+edges <- edges[edges$alter_id %in% nodes$std_id,]
+library(igraph)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+g
+par(mar=c(0,0,0,0)); plot(g)
+```
+
+Now we can convert the `igraph` object to `network` format. Check that the size of the network is the same as before.
+
+```{r}
+library(intergraph)
+net <- asNetwork(g)
+net
+```
+
+And we're ready to start estimating models! First, estimate a baseline model with total number of edges and number of mutual edges. What do you learn?
+
+```{r}
+library(ergm, quietly=TRUE)
+out <- ergm(net ~ edges + mutual)
+summary(out)
+exp(coef(out)[1]) # density around 10%
+exp(coef(out)[2]) # high reciprocity
+```
+
+Now, let's examine the effect of similarity across race, gender, and income. 
+```{r}
+out <- ergm(net ~ edges + mutual + nodematch("gnd") + nodematch("rce") + absdiff("per_cap_inc"))
+summary(out)
+exp(coef(out)[4]) # high reciprocity on race
+```
+
