@@ -1,0 +1,82 @@
+---
+title: "Challenge 1"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
+date: January 21, 2016
+output: html_document
+---
+
+[&laquo; Text Analysis Module](../text/README.md)
+
+Write commands that help you answer the following questions about the bullying dataset.
+
+1. What are the most popular words in the dataset, other than bullying words?
+```{r}
+library(tm)
+df.tweets <- read.csv("bullying.csv", stringsAsFactors = FALSE)
+corpus     <- VCorpus(VectorSource(df.tweets$text))
+corpus     <- tm_map(corpus, content_transformer(tolower))
+corpus   <- tm_map(corpus, removeWords, stopwords("english"))
+corpus   <- tm_map(corpus, removePunctuation)
+corpus   <- tm_map(corpus, stripWhitespace)
+corpus   <- tm_map(corpus, stemDocument)
+dtm <- DocumentTermMatrix(corpus)
+findFreqTerms(dtm, 50)
+```
+
+2. Create a wordcloud comparison between bullying tweets and non-bullying tweets.
+```{r}
+# Identify posts with and without bullying traces and create large documents
+no_bullying <- paste(df.tweets$text[df.tweets$bullying_traces=="n"], collapse=" ")
+yes_bullying <- paste(df.tweets$text[df.tweets$bullying_traces=="y"], collapse=" ")
+# Create DTM and preprocess
+groups <- VCorpus(VectorSource(c("No bullying" = no_bullying, "Yes bullying" = yes_bullying)))
+groups <- tm_map(groups, content_transformer(tolower))
+groups <- tm_map(groups, removePunctuation)
+groups <- tm_map(groups, stripWhitespace)
+dtm <- DocumentTermMatrix(groups)
+## Label the two groups
+dtm$dimnames$Docs = c("No bullying", "Yes bullying")
+## Transpose matrix so that we can use it with comparison.cloud
+tdm <- t(dtm)
+## Compute TF-IDF transformation
+tdm <- as.matrix(weightTfIdf(tdm))
+
+## Display the two word clouds
+library(wordcloud)
+comparison.cloud(tdm, max.words=100, colors=c("red", "blue"))
+```
+
+3. There are five types of bullying traces that appear in the bullying dataset (in the variable `type`): accusation, cyberbullying, denial, report, and self-disclosure. Train, cross-validate, and test a model for classifying the `type` variable. (Clue: remove missing values first, and convert the variable to numeric)
+```{r}
+df <- df.tweets[df.tweets$type!="",]
+df$type <- as.numeric(factor(df$type))
+training_break <- as.integer(0.9*nrow(df))
+library(RTextTools)
+dtm       <- create_matrix(df$text, language="english", stemWords = TRUE,
+                           weighting = weightTfIdf, removePunctuation = FALSE)
+container      <- create_container(dtm, t(df$type), trainSize=1:training_break,
+                                testSize=training_break:nrow(df), virgin=FALSE)
+cv.svm <- cross_validate(container, 3, algorithm = 'SVM', kernel = 'linear')
+cv.svm$meanAccuracy
+prop.table(table(df$type)) # baseline
+```
+
+4. Create a topic model for tweets in English that mention bullying traces. Test the topic model with 10, 30, and 50 topics. What differences do you start to see when you change the number of topics?
+```{r}
+df.tweets.en <- df.tweets[df.tweets$lang == 'en',]
+corpus <- VCorpus(VectorSource(df.tweets.en$text))
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeWords, c("bully", "bullying", "bullied"))
+dtm <- DocumentTermMatrix(corpus)
+
+## get rid of documents which have no terms after removing the above
+m   <- as.matrix(dtm)
+dtm <- dtm[rowSums(m) > 0,]
+
+n_topics <- 10
+library(topicmodels)
+lda      <- LDA(dtm, k = n_topics, method = "Gibbs", 
+                control = list(verbose=25L, seed = 123, burnin = 100, iter = 100))
+get_terms(lda, 10)
+```
