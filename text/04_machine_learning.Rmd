@@ -1,6 +1,6 @@
 ---
 title: "Machine Learning: Document Classification and Topic Modeling"
-author: Alex Hanna
+author: Alex Hanna, Pablo Barbera, Dan Cervone
 date: January 21, 2016
 output: html_document
 ---
