@@ -19,12 +19,21 @@ Write commands that help you answer the following questions about the bullying d
 
 ```
 
-3. There are five types of bullying traces that appear in the bullying dataset: accusation, cyberbullying, denial, report, and self-disclosure. Train, cross-validate, and test a model for classifying the `type` variable.
+3. There are five types of bullying traces that appear in the bullying dataset (in the variable `type`): accusation, cyberbullying, denial, report, and self-disclosure. Train, cross-validate, and test a model for classifying the `type` variable. (Clue: remove missing values first, and convert the variable to numeric)
 ```{r}
 
 ```
 
-4. Create a topic model for tweets that mention bullying traces. Test the topic model with 10, 30, and 50 topics. What differences do you start to see when you change the number of topics?
+4. Create a topic model for tweets in English that mention bullying traces. Test the topic model with 10, 30, and 50 topics. What differences do you start to see when you change the number of topics? (Clue: get rid of documents that have no words after preprocessing; you can use the code below.)
 ```{r}
+
+...
+
+## get rid of documents which have no terms after removing the above
+m   <- as.matrix(dtm)
+dtm <- dtm[rowSums(m) > 0,]
+
+...
+
 
 ```
