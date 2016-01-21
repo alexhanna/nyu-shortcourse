@@ -116,7 +116,31 @@ nrow(df.tweets)
 length(grep('bull[a-z]+', df.tweets$lower_text))
 ```
 
-That did the trick. Now let's try to identify what tweets are probably not related to bullying. For example, how many tweets mention `bullet`?
+That did the trick! Other common expression patterns are:
+
+- `.` matches any character, `^` and `$` match the beginning and end of a string.  
+- Any character followed by `{3}`, `*`, `+` is matched exactly 3 times, 0 or more times, 1 or more times.  
+- `[0-9]`, `[a-zA-Z]`, `[:alnum:]` match any digit, any letter, or any digit and letter.  
+- Special characters such as `.`, `\`, `(` or `)` must be preceded by a backslash.  
+- See `?regex` for more details.
+
+Another function that we will use is `gsub`, which replaces a pattern (or a regular expression) with another string:
+
+```{r}
+string <- c("Today is January 21st", "Yesterday was the 20th")
+gsub('[0-9]+', 'ZZ', string)
+gsub('[A-Z]+', 'CAPITALLETTER', string)
+gsub('t$', 'FINAL-T', string)
+```
+
+To extract a pattern, and not just replace, use parentheses and choose the option `repl="\\1"`:
+
+```{r}
+string <- c("Today is January 21st", "Yesterday was the 20th")
+gsub('.*([0-9]{2}).*', string, repl="\\1")
+```
+
+Now let's try to identify what tweets are probably not related to bullying. For example, how many tweets mention `bullet`?
 
 ```{r}
 nrow(df.tweets)
@@ -161,3 +185,75 @@ df.tweets$bully_instance <- unlist(mentions) # a vector
 df.tweets[13:15, c("text", "bully_instance")]
 ```
 
+
+
+#### Dictionary methods
+
+A different type of keyword analysis consists on the application of dictionary methods, or lexicon-based approaches to the measurement of tone or the prediction of diferent categories related to the content of the text. 
+
+The most common application is sentiment analysis: using a dictionary of positive and negative words, we compute a sentiment score for each individual document.
+
+```{r}
+# loading lexicon of positive and negative words (from Neal Caren)
+lexicon <- read.csv("lexicon.csv", stringsAsFactors=F)
+pos.words <- lexicon$word[lexicon$polarity=="positive"]
+neg.words <- lexicon$word[lexicon$polarity=="negative"]
+# a look at a random sample of positive and negative words
+sample(pos.words, 10)
+sample(neg.words, 10)
+```
+
+We will need to preprocess the text a bit. We'll see more details about this soon, but for now let's just split into words using spaces and remove punctuation:
+
+```{r}
+clean_text <- function(text){
+  text <- gsub('[[:punct:]]+', '', text) # remove punctuation
+  words <- str_split(text, " +") # one or more spaces
+  return(words)
+}
+# let's see if it works...
+df.tweets$lower_text[1]
+clean_text(df.tweets$lower_text[1])
+
+```
+
+And now we can write a function to classify the words in each tweet:
+```{r}
+# a function to classify individual tweets
+classify <- function(words, pos.words, neg.words){
+    # count number of positive and negative word matches
+    pos.matches <- sum(words %in% pos.words)
+    neg.matches <- sum(words %in% neg.words)
+    return(pos.matches - neg.matches)
+}
+# an example
+(text <- clean_text(df.tweets$lower_text[2]))
+classify(text[[1]], pos.words, neg.words)
+```
+
+But we want to aggregate over many tweets, so let's write a function that works with a list of character strings:
+
+```{r}
+sentiment_scores <- function(text, pos.words, neg.words){
+    # classifier
+    scores <- unlist(lapply(text, classify, pos.words, neg.words))
+    n <- length(scores)
+    positive <- as.integer(length(which(scores>0))/n*100)
+    negative <- as.integer(length(which(scores<0))/n*100)
+    neutral <- 100 - positive - negative
+    cat(n, "tweets:", positive, "% positive,",
+        negative, "% negative,", neutral, "% neutral")
+}
+```
+
+And let's run everything:
+
+```{r}
+# clean all tweets
+text <- clean_text(df.tweets$lower_text)
+length(text); class(text)
+# compute aggregate sentiment
+sentiment_scores(text, pos.words, neg.words)
+```
+
+What do we learn?

@@ -174,7 +174,28 @@ length(grep('bully', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
 <pre class="r"><code>length(grep('bull[a-z]+', df.tweets$lower_text))</code></pre>
 <pre><code>## [1] 5022</code></pre>
-<p>That did the trick. Now let’s try to identify what tweets are probably not related to bullying. For example, how many tweets mention <code>bullet</code>?</p>
+<p>That did the trick! Other common expression patterns are:</p>
+<ul>
+<li><code>.</code> matches any character, <code>^</code> and <code>$</code> match the beginning and end of a string.<br /></li>
+<li>Any character followed by <code>{3}</code>, <code>*</code>, <code>+</code> is matched exactly 3 times, 0 or more times, 1 or more times.<br /></li>
+<li><code>[0-9]</code>, <code>[a-zA-Z]</code>, <code>[:alnum:]</code> match any digit, any letter, or any digit and letter.<br /></li>
+<li>Special characters such as <code>.</code>, <code>\</code>, <code>(</code> or <code>)</code> must be preceded by a backslash.<br /></li>
+<li>See <code>?regex</code> for more details.</li>
+</ul>
+<p>Another function that we will use is <code>gsub</code>, which replaces a pattern (or a regular expression) with another string:</p>
+<pre class="r"><code>string &lt;- c(&quot;Today is January 21st&quot;, &quot;Yesterday was the 20th&quot;)
+gsub('[0-9]+', 'ZZ', string)</code></pre>
+<pre><code>## [1] &quot;Today is January ZZst&quot;  &quot;Yesterday was the ZZth&quot;</code></pre>
+<pre class="r"><code>gsub('[A-Z]+', 'CAPITALLETTER', string)</code></pre>
+<pre><code>## [1] &quot;CAPITALLETTERoday is CAPITALLETTERanuary 21st&quot;
+## [2] &quot;CAPITALLETTEResterday was the 20th&quot;</code></pre>
+<pre class="r"><code>gsub('t$', 'FINAL-T', string)</code></pre>
+<pre><code>## [1] &quot;Today is January 21sFINAL-T&quot; &quot;Yesterday was the 20th&quot;</code></pre>
+<p>To extract a pattern, and not just replace, use parentheses and choose the option <code>repl=&quot;\\1&quot;</code>:</p>
+<pre class="r"><code>string &lt;- c(&quot;Today is January 21st&quot;, &quot;Yesterday was the 20th&quot;)
+gsub('.*([0-9]{2}).*', string, repl=&quot;\\1&quot;)</code></pre>
+<pre><code>## [1] &quot;21&quot; &quot;20&quot;</code></pre>
+<p>Now let’s try to identify what tweets are probably not related to bullying. For example, how many tweets mention <code>bullet</code>?</p>
 <pre class="r"><code>nrow(df.tweets)</code></pre>
 <pre><code>## [1] 5022</code></pre>
 <pre class="r"><code>length(grep('bullet', df.tweets$lower_text))</code></pre>
@@ -299,6 +320,76 @@ df.tweets[13:15, c(&quot;text&quot;, &quot;bully_instance&quot;)]</code></pre>
 ## 13                           bullying
 ## 14                            bulling
 ## 15 bullies, bullies, bullied, bullied</code></pre>
+<div id="dictionary-methods" class="section level4">
+<h4>Dictionary methods</h4>
+<p>A different type of keyword analysis consists on the application of dictionary methods, or lexicon-based approaches to the measurement of tone or the prediction of diferent categories related to the content of the text.</p>
+<p>The most common application is sentiment analysis: using a dictionary of positive and negative words, we compute a sentiment score for each individual document.</p>
+<pre class="r"><code># loading lexicon of positive and negative words (from Neal Caren)
+lexicon &lt;- read.csv(&quot;lexicon.csv&quot;, stringsAsFactors=F)
+pos.words &lt;- lexicon$word[lexicon$polarity==&quot;positive&quot;]
+neg.words &lt;- lexicon$word[lexicon$polarity==&quot;negative&quot;]
+# a look at a random sample of positive and negative words
+sample(pos.words, 10)</code></pre>
+<pre><code>##  [1] &quot;viability&quot;   &quot;historic&quot;    &quot;ready&quot;       &quot;convenient&quot;  &quot;adhesion&quot;   
+##  [6] &quot;poignant&quot;    &quot;heroically&quot;  &quot;fashionably&quot; &quot;sublime&quot;     &quot;richly&quot;</code></pre>
+<pre class="r"><code>sample(neg.words, 10)</code></pre>
+<pre><code>##  [1] &quot;incendiary&quot;   &quot;condemnable&quot;  &quot;battle-lines&quot; &quot;sarcasm&quot;     
+##  [5] &quot;self-coup&quot;    &quot;dizzingly&quot;    &quot;jittery&quot;      &quot;rumbling&quot;    
+##  [9] &quot;perversion&quot;   &quot;depressed&quot;</code></pre>
+<p>We will need to preprocess the text a bit. We’ll see more details about this soon, but for now let’s just split into words using spaces and remove punctuation:</p>
+<pre class="r"><code>clean_text &lt;- function(text){
+  text &lt;- gsub('[[:punct:]]+', '', text) # remove punctuation
+  words &lt;- str_split(text, &quot; +&quot;) # one or more spaces
+  return(words)
+}
+# let's see if it works...
+df.tweets$lower_text[1]</code></pre>
+<pre><code>## [1] &quot;#canada news: and the saga of official bullying #bilingualism continues.  #english #french #francophone... httplink&quot;</code></pre>
+<pre class="r"><code>clean_text(df.tweets$lower_text[1])</code></pre>
+<pre><code>## [[1]]
+##  [1] &quot;canada&quot;       &quot;news&quot;         &quot;and&quot;          &quot;the&quot;         
+##  [5] &quot;saga&quot;         &quot;of&quot;           &quot;official&quot;     &quot;bullying&quot;    
+##  [9] &quot;bilingualism&quot; &quot;continues&quot;    &quot;english&quot;      &quot;french&quot;      
+## [13] &quot;francophone&quot;  &quot;httplink&quot;</code></pre>
+<p>And now we can write a function to classify the words in each tweet:</p>
+<pre class="r"><code># a function to classify individual tweets
+classify &lt;- function(words, pos.words, neg.words){
+    # count number of positive and negative word matches
+    pos.matches &lt;- sum(words %in% pos.words)
+    neg.matches &lt;- sum(words %in% neg.words)
+    return(pos.matches - neg.matches)
+}
+# an example
+(text &lt;- clean_text(df.tweets$lower_text[2]))</code></pre>
+<pre><code>## [[1]]
+##  [1] &quot;httplink&quot;    &quot;scabies&quot;     &quot;celebrities&quot; &quot;open&quot;        &quot;up&quot;         
+##  [6] &quot;about&quot;       &quot;their&quot;       &quot;bullying&quot;    &quot;experiences&quot; &quot;in&quot;         
+## [11] &quot;new&quot;         &quot;book&quot;        &quot;dont&quot;        &quot;peak&quot;        &quot;at&quot;         
+## [16] &quot;high&quot;        &quot;school&quot;</code></pre>
+<pre class="r"><code>classify(text[[1]], pos.words, neg.words)</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>But we want to aggregate over many tweets, so let’s write a function that works with a list of character strings:</p>
+<pre class="r"><code>sentiment_scores &lt;- function(text, pos.words, neg.words){
+    # classifier
+    scores &lt;- unlist(lapply(text, classify, pos.words, neg.words))
+    n &lt;- length(scores)
+    positive &lt;- as.integer(length(which(scores&gt;0))/n*100)
+    negative &lt;- as.integer(length(which(scores&lt;0))/n*100)
+    neutral &lt;- 100 - positive - negative
+    cat(n, &quot;tweets:&quot;, positive, &quot;% positive,&quot;,
+        negative, &quot;% negative,&quot;, neutral, &quot;% neutral&quot;)
+}</code></pre>
+<p>And let’s run everything:</p>
+<pre class="r"><code># clean all tweets
+text &lt;- clean_text(df.tweets$lower_text)
+length(text); class(text)</code></pre>
+<pre><code>## [1] 5022</code></pre>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<pre class="r"><code># compute aggregate sentiment
+sentiment_scores(text, pos.words, neg.words)</code></pre>
+<pre><code>## 5022 tweets: 13 % positive, 35 % negative, 52 % neutral</code></pre>
+<p>What do we learn?</p>
+</div>
 
 
 </div>
