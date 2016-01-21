@@ -1,13 +1,15 @@
 ---
 title: "Introduction to social network analysis with R"
-author: "Pablo Barbera"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
 date: "January 21, 2016"
 output: html_document
 ---
 
 #### Importing network data into R
 
-Reading list of edges and node information
+In this section we will be using a small network that indicates [interactions in the movie Star Wars Episode IV](http://evelinag.com/blog/2015/12-15-star-wars-social-network/). Here, each node is a character and each edge indicates whether they appeared together in a scene of the movie. Edges here are thus _undirected_ and they also have weights attached, since they can appear in multiple scenes together.
+
+The first step is to read the list of edges and nodes in this network:
 
 ```{r}
 edges <- read.csv("data/star-wars-network-edges.csv")
@@ -16,9 +18,14 @@ nodes <- read.csv("data/star-wars-network-nodes.csv")
 head(nodes)
 ```
 
-Creating igraph object
+For example, we learn that C-3PO and R2-D2 appeared in 17 scenes together.
+
+How do we convert these two datasets into a network object in R? There are multiple packages to work with networks, but the most popular is `igraph` because it's very flexible and easy to do, and in my experience it's much faster and scales well to very large networks. Other packages that you may want to explore are `sna` and `networks`. We'll see an example later in this class, because some network modeling packages are not compatible with `igraph`.
+
+Now, how do we create the igraph object? We can use the `graph_from_data_frame` function, which takes two arguments: `d`, the data frame with the edge list in the first two columns; and `vertices`, a data frame with node data with the node label in the first column. (Note that igraph calls the nodes `vertices`, but it's exactly the same thing.)
 
 ```{r, message=FALSE}
+# install.packages("igraph")
 library(igraph)
 g <- graph_from_data_frame(d=edges, vertices=nodes, directed=FALSE)
 g
@@ -29,11 +36,11 @@ What does it mean?
 - `N` means named graph  
 - `W` means weighted graph  
 - `22` is the number of nodes  
-- `61` is the number of edges  
+- `60` is the number of edges  
 - `name (v/c)` means _name_ is a node attribute and it's a character  
 - `weight (e/n)` means _weight_ is an edge attribute and it's numeric  
 
-Access specific elements within the igraph object
+This is how you access specific elements within the igraph object:
 
 ```{r}
 V(g) # nodes
@@ -48,40 +55,54 @@ g[1,] # first row of adjacency matrix
 
 #### Network visualization
 
-How can we visualize this network? The `plot()` function works out of the box, but the default options often are not ideal
+How can we visualize this network? The `plot()` function works out of the box, but the default options are often not ideal:
 
 ```{r}
 par(mar=c(0,0,0,0))
 plot(g)
 ```
 
-`?igraph.plotting` 
-Changing general plotting options
+Let's see how we can improve this figure. To see all the available plotting options, you can check `?igraph.plotting`. Let's start by fixing some of these.
 
 ```{r}
 par(mar=c(0,0,0,0))
 plot(g,
-     vertex.color = "grey",
-     vertex.label.color = "black",
-     vertex.label.cex = .75,
-     edge.curved=.25,
-     edge.color="grey20")
+     vertex.color = "grey", # change color of nodes
+     vertex.label.color = "black", # change color of labels
+     vertex.label.cex = .75, # change size of labels to 75% of original size
+     edge.curved=.25, # add a 25% curve to the edges
+     edge.color="grey20") # change edge color to grey
 ```
 
-Modifying igraph object to add plotting attributes
+Now imagine that we want to modify some of these plotting attributes so that they are function of network properties. For example, a common adjustment is to change the size of the nodes and node labels so that they match their `importance` (we'll come back to how to measure that later). Here, `strength` will correspond to the number of scenes they appear in. And we're only going to show the labels of character that appear in 10 or more scenes.
 
 ```{r}
+V(g)$size <- strength(g)
+par(mar=c(0,0,0,0)); plot(g)
+
+# taking the log to improve it
 V(g)$size <- log(strength(g)) * 4 + 3
 par(mar=c(0,0,0,0)); plot(g)
 
-V(g)$label <- ifelse( V(g)$size>12, V(g)$name, NA)
+V(g)$label <- ifelse( strength(g)>=10, V(g)$name, NA )
 par(mar=c(0,0,0,0)); plot(g)
 
+# what does `ifelse` do?
+nodes$name=="R2-D2"
+ifelse(nodes$name=="R2-D2", "yes", "no")
+ifelse(grepl("R", nodes$name), "yes", "no")
+```
+
+We can also change the colors of each node based on what side they're in (dark side or light side).
+
+```{r}
+# create vectors with characters in each side
 dark_side <- c("DARTH VADER", "MOTTI", "TARKIN")
 light_side <- c("R2-D2", "CHEWBACCA", "C-3PO", "LUKE", "CAMIE", "BIGGS",
                 "LEIA", "BERU", "OWEN", "OBI-WAN", "HAN", "DODONNA",
                 "GOLD LEADER", "WEDGE", "RED LEADER", "RED TEN", "GOLD FIVE")
 other <- c("GREEDO", "JABBA")
+# node we'll create a new color variable as a node property
 V(g)$color <- NA
 V(g)$color[V(g)$name %in% dark_side] <- "red"
 V(g)$color[V(g)$name %in% light_side] <- "gold"
@@ -89,25 +110,30 @@ V(g)$color[V(g)$name %in% other] <- "grey20"
 vertex_attr(g)
 par(mar=c(0,0,0,0)); plot(g)
 
-
-E(g)$width <- log(E(g)$weight) + 1
-edge_attr(g)
-par(mar=c(0,0,0,0)); plot(g)
-
+# what does %in% do?
+1 %in% c(1,2,3,4)
+1 %in% c(2,3,4)
 ```
 
-Adding a legend
-
+If we want to indicate what the colors correspond to, we can add a legend.
 ```{r}
 par(mar=c(0,0,0,0)); plot(g)
 legend(x=.75, y=.75, legend=c("Dark side", "Light side", "Other"), 
        pch=21, pt.bg=c("red", "gold", "grey20"), pt.cex=2, bty="n")
-
 ```
 
-Layouts.
-
+Edge properties can also be modified. For example, here the width of each edge is a function of the log number of scenes those two characters appear together.
 ```{r}
+E(g)$width <- log(E(g)$weight) + 1
+edge_attr(g)
+par(mar=c(0,0,0,0)); plot(g)
+```
+
+Up to now, everytime we run the `plot` function, the nodes appear to be in a different location. Why? Because it's running a probabilistic function trying to locate them in the optimal way possible.
+
+However, we can also specify the __layout__ for the plot; that is, the (x,y) coordinates where each node will be placed. `igraph` has a few different layouts built-in, that will use different algorithms to find an `optimal` distribution of nodes. The following code illustrates some of these:
+
+```{r, fig.width=12, fig.height=7}
 par(mfrow=c(2, 3), mar=c(0,0,1,0))
 plot(g, layout=layout_randomly, main="Random")
 plot(g, layout=layout_in_circle, main="Circle")
@@ -117,15 +143,21 @@ plot(g, layout=layout_on_grid, main="Grid")
 plot(g, layout=layout_with_fr, main="Force-directed")
 ```
 
+Note that each of these is actually just a matrix of (x,y) locations for each node.
+
 ```{r}
 l <- layout_randomly(g)
 str(l)
 ```
 
-[Force-directed layouts](https://en.wikipedia.org/wiki/Force-directed_graph_drawing) , such as Fruchterman-Reingold, try to position the nodes so that the edges have similar length and there are as few crossing edges as possible. In the resulting layout, nodes that are closers to each other share more connections in common that those that are located further apart.
+The most popular layouts are [force-directed ](https://en.wikipedia.org/wiki/Force-directed_graph_drawing). These algorithms, such as Fruchterman-Reingold, try to position the nodes so that the edges have similar length and there are as few crossing edges as possible. The idea is to generate "clean" layouts, where nodes that are closer to each other share more connections in common that those that are located further apart. Note that this is a non-deterministic algorithm: choosing a different seed will generate different layouts.
 
-```{r}
+```{r, fig.width=12, fig.height=7}
+par(mfrow=c(1,2))
 set.seed(777)
+fr <- layout_with_fr(g, niter=1000)
+par(mar=c(0,0,0,0)); plot(g, layout=fr)
+set.seed(666)
 fr <- layout_with_fr(g, niter=1000)
 par(mar=c(0,0,0,0)); plot(g, layout=fr)
 ```

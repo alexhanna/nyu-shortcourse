@@ -1,11 +1,13 @@
 ---
 title: "Social network analysis with R: modeling"
-author: "Pablo Barbera"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
 date: "January 21, 2016"
 output: html_document
 ---
 
-`ergm` package works with object in `network` format (not `igraph`), so we need to convert first between packages using the `intergraph` package.
+Up to this point, we have focused on describing networks, both visually and numerically. Now we turn to trying to __explain__ how networks emerge: what are the mechanisms that explain the structure of the observed networks?
+
+We'll continue with the example of the Twitter network of Congress. Our goal will be to find the micro-mechanisms that explain following decisions and thus network formation.
 
 ```{r, echo=FALSE, message=FALSE}
 nodes <- read.csv("data/congress-twitter-network-nodes.csv")
@@ -13,33 +15,95 @@ edges <- read.csv("data/congress-twitter-network-edges.csv")
 library(igraph)
 g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
 g <- decompose(g)[[1]]
+```
 
+One of the most basic notions governing network formation is __homophily__, that is, the propensity of individuals to [cluster along common traits](https://en.wikipedia.org/wiki/Homophily), such as agen, gender, class, etc. 
+
+We can measure the extent to which a network is homophilic along a specific variable by computing the __assortativity index__. Positive values indicate a positive propensity; negative values indicate negative propensity.
+
+```{r}
+assortativity_degree(g, directed=FALSE)
+assortativity(g, log(V(g)$followers_count), directed=FALSE)
+assortativity_nominal(g, factor(V(g)$chamber))
+assortativity_nominal(g, factor(V(g)$party))
+assortativity_nominal(g, factor(V(g)$gender))
+```
+
+The main limitation with this approach is that we don't know to what extent this coefficients are different from what you would find simply by chance in any network. Furthermore, it is hard to disentangle what is the variable that is driving homophily. For example, the proportion of women is higher among Republicans, and thus the homophily result for gender could be simply due to party effects. (Of course, I'm putting aside issues related to causality: homophily could be driven by selection or by social influence.)
+
+```{r}
+prop.table(table(V(g)$gender, V(g)$party), margin=2)
+```
+
+To try to address these limitations, we can rely on __exponential random graph models__. We will not get into the details, but here's a general intuition of how these models work:
+
+- These models start from your observed network. It is considered a realization of many possible networks with the same number of nodes and edges.   
+- The goal is to learn the mechanisms that explain how you get to this specific network, e.g. homophily, reciprocity, transitivity... Each of these mechanisms is considered a parameter in the model.  
+- Assuming these mechanisms, what is the likelihood of arriving to the network you observe? From the probability distribution of all possible networks based on the parameter space, what is the probability of observing this particular one?
+- The goal is to estimate the parameters that best match the observed network using MCMC methods.  
+
+For a great introduction to ERGMs, see [Robins et al (2007) _An introduction to exponential random graph (p*) models for social networks_, __Social Networks__](http://ptrckprry.com/course/ssd/Robi07a.pdf).
+
+We can estimate these models with the `ergm` package in R. Unfortunately, `ergm` works with object in `network` format (not `igraph`), so we will need to convert first between packages using the `intergraph` package.
+
+```{r}
 library(intergraph)
 library(network)
 net <- asNetwork(g)
-
+net
 ```
 
-Edges = number of edges in the network. Similar to a constant. exp(edges) close to observed density.
-Mutual = number of mutual edges in the network. If positive, it means reciprocity is more common than expected. If you see an edge from i to j; then you are exp(mutual) times more likely to see an edge from j to i as well.
-nodematch = probability that an edge between nodes with the same value on this variable exists. exp(nodematch) times more likely for an edge to exist when values match than otherwise.
+(We could also create the object directly as a `network` object, but converting from igraph is easier.)
+
+What parameters can we add to the model?
+
+- __edges__ = number of edges in the network. It's equivalent to a constant in a regression. Given that this network is relatively sparse, the parameter is negative, which means that the probability of observing any given edge is low. In fact, the estimated parameter in this baseline model is equal to the log of the odds of observing any edge.
 
 ```{r}
-#install.packages("ergm")
 library(ergm)
-reg1 <- ergm(net ~ edges + mutual)
-summary(reg1) 
-mcmc.diagnostics(reg1)
+reg1 <- ergm(net ~ edges)
+summary(reg1)
+
+#   no. of edges / ( no. of potential edges - no. of existing edges)
+log(length(E(g)) / ( length(V(g))*(length(V(g))-1) - length(E(g))))
 ```
 
-```{r}
-reg2 <- ergm(net ~ edges + mutual + nodecov("followers_count") + nodefactor("chamber"))
-summary(reg2)
+- __mutual__ = number of mutual dyads. This parameter captures reciprocity as a mechanism for tie formation. If positive, it means reciprocity is more common than expected given the baseline probability of any two nodes being connected, holding the number of edges constant. In the case below, the positive coefficient means that if you see an edge from `i` to `j`, then you are exp(2.04)=7.76 times more likely to see an edge from `j` to `i` as well.
 
-reg3 <- ergm(net ~ edges + nodefactor("chamber") +
-               absdiff("followers_count", pow=1/2) + nodematch("party") + 
+```{r}
+reg2 <- ergm(net ~ edges + mutual)
+summary(reg2)
+```
+
+- __nodematch__ = captures homophily on a specific factor variable. It measures the increase in the probability that an edge exists between two nodes with the same value on this variable. In the example below, a Member of Congress of the same party is exp(1.50)=4.48 times more likely to follow another Member of Congress if he/she belongs to the same party.
+
+```{r}
+reg3 <- ergm(net ~ edges + mutual + nodematch("party"))
+summary(reg3) 
+```
+
+- __nodecov__ and __nodefactor__ = measure whether individuals with high values on a variable or with a specific value on a factor variable are more likely to follow or to be followed.
+- __absdiff__ = measures whether individuals with similar values along a continuous variable are more likely to have an edge between them (in either direction).
+
+```{r}
+reg4 <- ergm(net ~ edges + mutual + nodefactor("chamber") +
+               absdiff("followers_count") + nodematch("party") + 
                nodematch("chamber") + nodematch("gender"))
-summary(reg3)
-exp(coef(reg3))
+summary(reg4)
+```
+
+One practical issues with ERGMs is that when you add multiple variables, the MCMC chains often have convergence issues. Sometimes just running these for more iterations and increasing the thinning parameter will fix this. Sadly, very often it's more difficult than that...
+
+```{r}
+mcmc.diagnostics(reg2)
+```
+
+Another way to check the results of the model is to simulate networks assuming the estimated parameters and compare their degree distribution to the observed indegree distribution. (Warning: running the code below will take a while!)
+
+```{r, eval=FALSE}
+sims <- simulate(reg2, nsim=10)
+summary(sims)
+reggof <- gof(reg2 ~ idegree)
+plot(reggof)
 ```
 

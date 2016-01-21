@@ -1,62 +1,68 @@
 ---
 title: "Social network analysis with R: node and network properties"
-author: "Pablo Barbera"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
 date: "January 21, 2016"
 output: html_document
 ---
+
+What are the most important nodes in a network? What is the propensity of two nodes that are connected to be both connected to a third node? What are the different hidden communities in a network? These are some of the descriptive questions that we will adress now, following with the example of the Star Wars network.
 
 ```{r, echo=FALSE, message=FALSE}
 library(igraph)
 edges <- read.csv("data/star-wars-network-edges.csv")
 nodes <- read.csv("data/star-wars-network-nodes.csv")
-g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=FALSE)
 ```
 
 #### Node properties
 
-Measures of centrality/importance
+We'll start with descriptive statistics at the node level. All of these are in some way measures of importance or __centrality__.
 
-Degree: how well-connected nodes are; a measure of direct influence
+The most basic measure is __degree__, the number of adjacent edges to each node. It is often considered a measure of direct influence. In the Star Wars network, it will be the unique number of characters that each character is interacting with.
 
 ```{r}
 sort(degree(g))
 ```
 
-In directed graphs, indegree and outdegree, with `mode="in"` or `mode="out"`.
+In directed graphs, there are three types of degree: indegree (incoming edges), outdegree (outgoing edges), and total degree. You can find these using `mode="in"` or `mode="out"` or `mode="total"`. 
 
-Strength is a weighted measure of degree.
+__Strength__ is a weighted measure of degree that takes into account the number of edges that go from one node to another. In this network, it will be the total number of interactions of each character with anybody else.
 
 ```{r}
 sort(strength(g))
 ```
 
-Closeness measures how many steps are required to access every other node from a given node; it's a measure of how long information takes to arrive (who hears news first?). Higher values mean less centrality.
+__Closeness__ measures how many steps are required to access every other node from a given node. It's a measure of how long information takes to arrive (who hears news first?). Higher values mean less centrality.
 
 ```{r}
-sort(closeness(g))
+sort(closeness(g, normalized=TRUE))
 ```
 
-Betweenness measures brokerage or gatekeeping potential. Approximately the number of shortest paths between nodes that pass through a particular node.
+__Betweenness__ measures brokerage or gatekeeping potential. It is (approximately) the number of shortest paths between nodes that pass through a particular node.
 
 ```{r}
 sort(betweenness(g))
 ```
 
-Eigenvector centrality: a measure of being connected to the well-connected. First eigenvector of the graph adjacency matrix. Only works with undirected networks.
+Eigenvector centrality is a measure of being well-connected connected to the well-connected. First eigenvector of the graph adjacency matrix. Only works with undirected networks.
 
 ```{r}
 sort(eigen_centrality(g)$vector)
 ```
 
-Page rank algorithm: approximates probability that any message would arrive to a particular node. Developed by Google founders, and originally applied to website links.
+__Page rank__ approximates probability that any message will arrive to a particular node. This algorithm was developed by Google founders, and originally applied to website links.
 
 ```{r}
 sort(page_rank(g)$vector)
 ```
 
+__Authority score__ is another measure of centrality [initially applied to the Web](https://en.wikipedia.org/wiki/HITS_algorithm). A node has high authority when it is linked by many other nodes that are linking many other nodes.
+
 ```{r}
 sort(authority_score(g)$vector)
 ```
+
+Finally, not exactly a measure of centrality, but we can learn more about who each node is connected to by using the following functions: `neighbors` (for direct neighbors) and `ego` (for neighbors up to `n` neighbors away)
 
 ```{r}
 neighbors(g, v=which(V(g)$name=="DARTH VADER"))
@@ -65,59 +71,107 @@ ego(g, order=2, nodes=which(V(g)$name=="DARTH VADER"))
 
 #### Network properties
 
-Size of the network
+Let's now try to describe what a network looks like as a whole. We can start with measures of the __size__ of a network. `diameter` is the length of the longest path (in number of edges) between two nodes. We can use `get_diameter` to identify this path. `mean_distance` is the average number of edges between any two nodes in the network. We can find each of these paths between pairs of edges with `distances`.
+
 ```{r}
-diameter(g)
-get_diameter(g)
-mean_distance(g)
-distances(g)
+diameter(g, directed=FALSE, weights=NA)
+get_diameter(g, directed=FALSE, weights=NA)
+mean_distance(g, directed=FALSE)
+dist <- distances(g, weights=NA)
+dist[1:5, 1:5]
 ```
 
-Density
+`edge_density` is the proportion of edges in the network over all possible edges that could exist.
+
 ```{r}
 edge_density(g)
+# 22*21 possible edges / 2 because it's undirected = 231 possible edges
+# but only 61 exist
+60/((22*21)/2)
 ```
 
-Reciprocity (only for directed graphs)
+`reciprocity` measures the propensity of each edge to be a mutual edge; that is, the probability that if `i` is connected to `j`, `j` is also connected to `i`.
+
 ```{r}
 reciprocity(g)
+# Why is it 1?
 ```
 
-Transitivity or clustering coefficient
+`transitivity`, also known as clustering coefficient, measures that probability that adjacent nodes of a network are connected. In other words, if `i` is connected to `j`, and `j` is connected to `k`, what is the probability that `i` is also connected to `k`?
+
 ```{r}
 transitivity(g)
 ```
 
 #### Network communities
 
-Connected components
+Networks often have different clusters or communities of nodes that are more densely connected to each other than to the rest of the network. Let's cover some of the different existing methods to identify these communities.
+
+The most straightforward way to partition a network is into __connected components__. Each component is a group of nodes that are connected to each other, but _not_ to the rest of the nodes. For example, this network has two components.
+
 ```{r}
 components(g)
+par(mar=c(0,0,0,0)); plot(g)
+```
+
+Most networks have a single __giant connected component__ that includes most nodes. Most studies of networks actually focus on the giant component (e.g. the shortest path between nodes in a network with two or more component is Inf!).
+
+```{r}
 giant <- decompose(g)[[1]]
 ```
 
-Community detection: finding subsets of the network that are more connected to each other than to the rest of the network
+Components can be __weakly connected__ (in undirected networks) or __strongly connected (in directed networks, where there is an edge that ends in every single node of that component).
+
+Even within a giant component, there can be different subsets of the network that are more connected to each other than to the rest of the network. The goal of __community detection algorithms__ is to identify these subsets.
+
+There are a few different algorithms, each following a different logic. 
+
+The __walktrap__ algorithm finds communities through a series of short random walks. The idea is that these random walks tend to stay within the same community. The length of these random walks is 4 edges by default, but you may want to experiment with different values. The goal of this algorithm is to identify the partition that maximizes a modularity score.
+
 ```{r}
-cluster_walktrap(g)
-# Others
-cluster_edge_betweenness(g)
-#cluster_fast_greedy(g)
-cluster_infomap(g)
-cluster_label_prop(g)
+cluster_walktrap(giant)
+cluster_walktrap(giant, steps=10)
 ```
 
-Plotting communities
+Other methods are:
+
+- The __fast and greedy__ method tries to directly optimize this modularity score.
+- The __infomap__ method attempts to map the flow of information in a network, and the different clusters in which information may get remain for longer periods. Similar to walktrap, but not necessarily maximizing modularity, but rather the so-called "map equation".
+- The __edge-betweenness__ method iteratively removes edges with high betweenness, with the idea that they are likely to connect different parts of the network. Here betweenness (gatekeeping potential) applies to edges, but the intuition is the same.
+- The __label propagation__ method labels each node with unique labels, and then updates these labels by choosing the label assigned to the majority of their neighbors, and repeat this iteratively until each node has the most common labels among its neighbors.
+
 ```{r}
-comm <- cluster_walktrap(giant)
-modularity(comm)
+cluster_fast_greedy(giant)
+cluster_edge_betweenness(giant)
+cluster_infomap(giant)
+cluster_label_prop(giant)
+```
+
+My experience is that infomap tends to work better in most social science examples (websites, social media, classrooms, etc), but fastgreedy is faster.
+
+`igraph` also makes it very easy to plot the resulting communities:
+```{r}
+comm <- cluster_infomap(giant)
+modularity(comm) # modularity score
 par(mar=c(0,0,0,0)); plot(comm, giant)
+```
+
+Alternatively, we can also add the membership to different communities as a color parameter in the `igraph` object.
+```{r}
 V(giant)$color <- membership(comm)
 par(mar=c(0,0,0,0)); plot(giant)
 ```
 
-K-core decomposition: core-periphery analysis. A k-core is a maximal group such that all nodes have at least degree K. This techniques informs us about the hierarchy of the network.
+The final way in which we can think about network communities is in terms of hierarchy or structure. We'll discuss two of these methods.
+
+__K-core decomposition__ allows us to identify the core and the periphery of the network. A k-core is a maximal subnet of a network such that all nodes have at least degree K.
+
 ```{r, fig.height=5, figh.width=6}
 coreness(g)
+which(coreness(g)==6) # what is the core of the network?
+which(coreness(g)==1) # what is the periphery of the network?
+
+# Visualizing network structure
 V(g)$coreness <- coreness(g)
 par(mfrow=c(2, 3), mar=c(0.1,0.1,1,0.1))
 set.seed(777); fr <- layout_with_fr(g)
@@ -125,15 +179,23 @@ for (k in 1:6){
   V(g)$color <- ifelse(V(g)$coreness>=k, "orange", "grey")
   plot(g, main=paste0(k, '-core shell'), layout=fr)
 }
-
 ```
 
-Backbone decomposition: subset of a weighted network that represents the most relevant connections, while maintaning its functionality. Common example: airport networks.
+If you want to learn more about this technique, we just published a [paper in PLOS ONE](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0143611) where we use it to study large-scale Twitter networks in the context of protest events.
+
+__Backbone decomposition__ identifies the subset of a weighted network that represents the most relevant connections, while maintaning its functionality. The most common application is identifying hubs in airport networks. The `alpha` parameter indicates the threshold for including a node in the backbone of the network.
 ```{r}
 #install.packages("disparityfilter")
 library(disparityfilter)
 gg <- get.backbone(g)
-plot(gg)
+par(mar=c(0,0,0,0)); plot(gg)
+
+# higher alpha
+gg <- get.backbone(g, alpha=0.10)
+par(mar=c(0,0,0,0)); plot(gg)
 
 ```
+
+
+
 
