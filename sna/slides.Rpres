@@ -1,0 +1,119 @@
+Social network analysis
+========================================================
+author: Pablo Barberá
+date: January 22, 2016
+
+========================================================
+title: false
+
+![picture1](img/Moreno-1.png)  
+Moreno, _Who Shall Survive?_, 1934
+
+========================================================
+title: false
+
+![picture1](img/Moreno-2.png)  
+Moreno, _Who Shall Survive?_, 1934
+
+========================================================
+title: false
+
+![picture1](img/Moreno-3.png)  
+Moreno, _Who Shall Survive?_, 1934
+
+========================================================
+title: false
+
+![picture1](img/Moreno-4.png)  
+Moreno, _Who Shall Survive?_, 1934
+
+========================================================
+
+![picture1](img/fowler.jpg)
+Christakis & Fowler, NEJM, 2007
+
+========================================================
+
+![picture1](img/adamic.png)
+Adamic & Glance, 2004, IWLD
+
+========================================================
+
+![picture1](img/email.gif)  
+[Email network of a company](http://www.orgnet.com/email.html)
+
+========================================================
+
+![picture1](img/barbera.png)  
+Barberá et al, 2015, Psychological Science
+
+Outline
+========================================================
+
+Social network analysis:  
+- Basic concepts
+- Importing network data into R
+- Network visualization
+- Node and network-level summary statistics
+- Community detection
+- Network modeling
+
+
+Basic concepts
+========================================================
+
+__Node__ (vertex): each of the objects in the graph
+
+__Edge__ (tie): each of the connections between nodes. 
+
+Two __types of edges__:
+- Undirected: symmetric connection, represented by lines.
+- Directed: imply direction, represented by arrows.
+
+A __graph__ consists of a set of nodes and edges.
+
+A few examples
+========================================================
+incremental: true
+
+- Classroom: students / friendships
+- Twitter: users / retweets
+- Academic literature: papers / citations
+- Internet: websites / hyperlinks
+- Trade: countries / trade flows
+- Biology: neurons / connections
+
+
+========================================================
+title: true
+
+Network visualization:  
+
+```{r, echo=FALSE}
+library(igraph)
+g <- graph( c("Jennifer", "Pablo", "Dan", "Jennifer", "Pablo", "Kevin", "Pablo", "Denis", "Denis", "Kevin", "Dan", "Kevin"), directed=FALSE)
+par(mar=c(1,1,1,1))
+plot(g,
+     vertex.size = 50,
+     vertex.color = "grey", # change color of nodes
+     vertex.label.color = "black", # change color of labels
+     vertex.label.cex = 3, # change size of labels to 75% of original size
+     edge.curved=.25, # add a 25% curve to the edges
+     edge.color="grey20") # change edge color to grey
+```
+
+***
+Adjacency matrix:  
+```{r, echo=FALSE}
+mat <- as_adjacency_matrix(g)
+as.matrix(mat)
+```
+
+Edgelist:  
+```{r, echo=FALSE}
+mat <- as_edgelist(g)
+colnames(mat) <- c("Node1", "Node2")
+mat
+
+```
+
