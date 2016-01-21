@@ -12,7 +12,7 @@ In this section we are going to focus on some basic string manipulation in R. We
 R stores the basic string in a character vector. `length` gets the number of items in the vector, while `nchar` is the number of characters in the vector.
 
 ```{r}
-# install.packages("stringr")
+#install.packages("stringr")
 library(stringr)
 str1 <- 'This is a string.'
 is.character(str1)
@@ -41,6 +41,7 @@ We can grab substrings with `substr`. The first argument is the string, the seco
 
 ```{r}
 substr(str1, 11, 16)
+substr(str1, 1, 4)
 ```
 
 This is useful when working with date strings as well:
@@ -67,7 +68,7 @@ is.character(df.tweets$text)
 head(df.tweets$text)
 ```
 
-The text has gone some preprocessing for anonyminity -- @usernames have been replaced with @USER and links starting with `http` have been replaced by HTTPLINK. 
+The text has gone some preprocessing for anonymity -- @usernames have been replaced with @USER and links starting with `http` have been replaced by HTTPLINK. 
 
 Now we can start to dig into the text a little bit more. Given the construction of the dataset, we can expect that there will be many instances of the word "bully." We can use the `grep` command to identify these. `grep` returns the index where the word occurs.
 
@@ -88,7 +89,10 @@ grepl('bully', c('That guy is a buly.', 'That guy is a bully. Fixed that for you
 Within the dataset, we can use the results of `grep` to get particular rows. First, check if the number of tweets mentioning "bully" match the total number of rows in the data frame.
 ```{r}
 nrow(df.tweets)
+grep('bully', df.tweets$text)
 length(grep('bully', df.tweets$text))
+
+grepl('bully', df.tweets$text)
 ```
 
 We are not retrieving all of the items within the dataset. One reason is because matching is case-sensitive. You can use the `ignore.case` argument to match to a lowercase version. You can also create a new column in which everything is lowercase with `str_to_lower`.
@@ -120,7 +124,7 @@ That did the trick! Other common expression patterns are:
 
 - `.` matches any character, `^` and `$` match the beginning and end of a string.  
 - Any character followed by `{3}`, `*`, `+` is matched exactly 3 times, 0 or more times, 1 or more times.  
-- `[0-9]`, `[a-zA-Z]`, `[:alnum:]` match any digit, any letter, or any digit and letter.  
+- `[0-9]`, `[a-zA-Z]`, `[:alnum:]` match any digit, any letter, or any digit and letter.
 - Special characters such as `.`, `\`, `(` or `)` must be preceded by a backslash.  
 - See `?regex` for more details.
 
@@ -152,7 +156,7 @@ Let's assume we want to get rid of these. How would we do it? First, let's creat
 ```{r}
 df.tweets$bullet <- grepl('bullet', df.tweets$text, ignore.case=TRUE)
 table(df.tweets$bullet)
-df.tweets.subset <- df.tweets[df.tweets$bullet==FALSE,]
+df.tweets.subset <- df.tweets[df.tweets$bullet==FALSE, ]
 ```
 
 Finally, say we want to extract the word that actually refers to the bullying in the tweet. We can use `str_extract` and `str_extract_all` to do that with the regular expression we created later. Using `str_extract` will only get the first instance, while `str_extract_all` will get the whole list.
@@ -179,6 +183,9 @@ Alternatively, we can also collapse the different words mentioned ourselves.
 ```{r}
 mentions <- str_extract_all(df.tweets$lower_text, 'bull[a-z]+')
 mentions[10:15] # a list
+
+paste(c("bully", "bullying", "bullied"), collapse=", ")
+
 mentions <- lapply(mentions, paste, collapse=", ")
 mentions[10:15] # a list
 df.tweets$bully_instance <- unlist(mentions) # a vector
@@ -229,6 +236,14 @@ classify <- function(words, pos.words, neg.words){
 # an example
 (text <- clean_text(df.tweets$lower_text[2]))
 classify(text[[1]], pos.words, neg.words)
+
+# finding what words were classified as positive/negative
+words <- clean_text(df.tweets$lower_text[2])
+words <- unlist(words)
+
+words[words %in% pos.words]
+words[words %in% neg.words]
+
 ```
 
 But we want to aggregate over many tweets, so let's write a function that works with a list of character strings:
