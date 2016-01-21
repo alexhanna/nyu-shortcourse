@@ -1,0 +1,75 @@
+---
+title: "Challenge 1"
+author: Alex Hanna, Pablo Barbera, Dan Cervone
+date: "January 21, 2016"
+output: html_document
+---
+
+The purpose of this challenge is to analyze the Twitter network of the Members of the U.S. Congress.
+
+In the `sna` folder of the GitHub repository, you will find two data files:
+
+- `congress-twitter-network-edges.csv` contains the edges of this network. Note that unlike in the previous example, these nodes are now directed: they indicate whether the legislator in the `source` column follows the legislator in the `target` column.
+- `congress-twitter-network-nodes.csv` contains information about each of the nodes. The only important variables you need to use for this challenge are: `id_str` (the unique Twitter ID for each legislator; same as in the edge list), `name` (full name of each legislator), `party` (Republican, Democrat or Independent), and `chamber` (`rep` for the House of Representatives, `sen` for the Senate).
+
+The first step will be to read these two datasets into R and construct the igrahp object. How many nodes and edges does this network have?
+
+```{r}
+nodes <- read.csv("data/congress-twitter-network-nodes.csv")
+edges <- read.csv("data/congress-twitter-network-edges.csv")
+
+library(igraph)
+g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+g
+```
+
+This network is too large for us to visualize it directly with R, so let's try to learn more about it using what we have learned so far.
+
+How many components does this network have? As you will see, in this particular case it makes sense that we work only with the giant component.
+
+```{r}
+components(g)[c("csize", "no")]
+g <- decompose(g)[[1]]
+```
+
+Who are the most relevant Members of Congress, according to different measures of centrality? Note that this is a directed network, which means there is a difference between indegree and outdegree.
+
+```{r}
+tail(sort(degree(g, mode="in")))
+tail(sort(betweenness(g)))
+tail(sort(page_rank(g)$vector))
+tail(sort(authority_score(g)$vector))
+```
+
+What communities can you find in the network? Use the additional node-level variables to try to identify whether these communities overlap with any of these other attributes. Try different community detection algorithms to see if you get different answers.
+
+```{r}
+comm <- cluster_walktrap(g)
+V(g)$comm <- membership(comm)
+table(V(g)$comm, V(g)$party)
+
+comm <- cluster_infomap(g)
+V(g)$comm <- membership(comm)
+table(V(g)$comm, V(g)$party, V(g)$chamber)
+
+```
+
+Finally, we'll try to visualize the network as well. Instead of plotting it in the Viewer window, we'll write directly to a PDF file. I have added a few options here for you so that it's faster, but note that this will probably take 1-2 minutes.
+
+```{r, eval=FALSE}
+set.seed(777)
+fr <- layout_with_fr(g, niter=1000)
+V(g)$color <- ifelse(V(g)$party=="Republican", "red", "blue") # clue
+V(g)$shape <- ifelse(V(g)$chamber=="sen", "square", "circle") # clue
+V(g)$label <- NA
+V(g)$size <- authority_score(g)$vector * 5
+
+pdf("congress-network.pdf")
+par(mar=c(0,0,0,0))
+plot(g, edge.curved=.25, edge.width=.05, edge.arrow.mode=0)
+dev.off()
+```
+
+
+
+
