@@ -22,7 +22,7 @@ nyt.fb <- getPage(page="nytimes", token=auth_token, n=100, since="2015/01/01")
 
 2. Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 nyt.fb <- read.csv("./nyt-fb.csv", stringsAsFactors=FALSE)
 
 str(nyt.fb)
@@ -30,7 +30,7 @@ str(nyt.fb)
 
 3. (Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 month <- substr(nyt.fb$created_time, 6, 7)
 hour <- substr(nyt.fb$created_time, 12, 13)
 nyt.fb <- data.frame(nyt.fb, month, hour)
@@ -40,7 +40,7 @@ nyt.fb <- data.frame(nyt.fb, month, hour)
 
 4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 total.resp <- nyt.fb$likes_count + nyt.fb$shares_count + nyt.fb$comments_count
 quantile(total.resp, .95) # top 5% total share/count/comment total
 viral <- total.resp > 10000
@@ -53,7 +53,7 @@ nyt.fb$viral <- viral
 
 5. **Fit a topic model to the message content of each post.** Incorporate the results as a feature you add to your `nyt.fb` data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.). Can you interpret the topics based on their associated terms?
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 library(topicmodels)
 library(tm)
 
@@ -87,7 +87,7 @@ nyt.fb$topic3 <- topic3
 
 6. **Search message content for some key words of interest, such as "israel", "yankees", "trump", etc. For each key word, create a new variable for whether the message content contains that word.** Add these variables to the `nyt.fb` data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 message <- removePunctuation(tolower(nyt.fb$message))
 nyt.fb$israel <- grepl("israel", message)
 nyt.fb$trump <- grepl("trump", message)
@@ -102,7 +102,7 @@ nyt.fb$debate <- grepl("debat", message)
 
 7. **Using the file `lexicon.csv` we saw in the "text" module, extract a sentiment score for the content of each message**. Add this score to the `nyt.fb` data frame.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 lexicon <- read.csv("lexicon.csv", stringsAsFactors=F)
 pos.words <- lexicon$word[lexicon$polarity=="positive"]
 neg.words <- lexicon$word[lexicon$polarity=="negative"]
@@ -125,7 +125,7 @@ nyt.fb$sent.score <- sent.score
 
 8. **Build at least one statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you've created in this exercise) EXCEPT the number of shares, counts, or likes.** Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your `viral` variable), and then classify "viral" or not based on the predictions of that model.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 # SVM example
 library(e1071)
 svm.viral <- svm(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
@@ -156,7 +156,7 @@ rf.resp <- randomForest(I(log(shares_count + likes_count + comments_count)) ~ mo
 
 9. **Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?**
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 set.seed(0)
 train.sample <- sample(nrow(nyt.fb), floor(.75 * nrow(nyt.fb)))
 train.data <- nyt.fb[train.sample, ]
@@ -199,7 +199,7 @@ confusionMatrix(test.data$viral, rf.viral.pred)
 
 10. **Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral**.
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, cache=TRUE}
 correct.pred <- sample(which(test.data$viral & svm.viral.pred), 1)
 incorrect.pred <- sample(which(!test.data$viral & svm.viral.pred), 1)
 test.data[correct.pred, ]

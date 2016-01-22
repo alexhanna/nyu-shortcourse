@@ -82,6 +82,9 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 <ol start="2" style="list-style-type: decimal">
 <li>Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.</li>
 </ol>
+<pre class="r"><code>nyt.fb &lt;- read.csv(&quot;./nyt-fb.csv&quot;, stringsAsFactors=FALSE)
+
+str(nyt.fb)</code></pre>
 <pre><code>## 'data.frame':    9960 obs. of  10 variables:
 ##  $ from_id       : num  5.28e+09 5.28e+09 5.28e+09 5.28e+09 5.28e+09 ...
 ##  $ from_name     : chr  &quot;The New York Times&quot; &quot;The New York Times&quot; &quot;The New York Times&quot; &quot;The New York Times&quot; ...
@@ -94,16 +97,46 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ##  $ comments_count: int  8 32 36 46 161 22 28 312 28 35 ...
 ##  $ shares_count  : int  24 202 20 98 76 91 204 1280 50 49 ...</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li><p>(Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).</p></li>
-<li><p><strong>Come up with criteria for determining whether a post is “viral”.</strong> For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable <code>viral</code> based on this and add it to your data frame.</p></li>
+<li>(Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).</li>
 </ol>
+<pre class="r"><code>month &lt;- substr(nyt.fb$created_time, 6, 7)
+hour &lt;- substr(nyt.fb$created_time, 12, 13)
+nyt.fb &lt;- data.frame(nyt.fb, month, hour)
+
+# write.csv(data.frame(month, hour), file=&quot;month-hour.csv&quot;, row.names=F)</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li><strong>Come up with criteria for determining whether a post is “viral”.</strong> For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable <code>viral</code> based on this and add it to your data frame.</li>
+</ol>
+<pre class="r"><code>total.resp &lt;- nyt.fb$likes_count + nyt.fb$shares_count + nyt.fb$comments_count
+quantile(total.resp, .95) # top 5% total share/count/comment total</code></pre>
 <pre><code>##     95% 
 ## 10928.4</code></pre>
+<pre class="r"><code>viral &lt;- total.resp &gt; 10000
+nyt.fb$viral &lt;- viral
+
+# write.csv(data.frame(viral), file=&quot;viral.csv&quot;, row.names=F)</code></pre>
 <div id="please-complete-at-least-2-out-of-the-following-3-tasks" class="section level4">
 <h4>Please complete at least 2 out of the following 3 tasks</h4>
 <ol start="5" style="list-style-type: decimal">
 <li><strong>Fit a topic model to the message content of each post.</strong> Incorporate the results as a feature you add to your <code>nyt.fb</code> data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.). Can you interpret the topics based on their associated terms?</li>
 </ol>
+<pre class="r"><code>library(topicmodels)
+library(tm)</code></pre>
+<pre><code>## Loading required package: NLP</code></pre>
+<pre class="r"><code># nyt.fb$message &lt;- gsub('\\&quot;', &quot;&quot;, x=nyt.fb$message)
+corpus &lt;- VCorpus(VectorSource(nyt.fb$message))
+corpus &lt;- tm_map(corpus, removePunctuation)
+corpus &lt;- tm_map(corpus, content_transformer(tolower))
+corpus &lt;- tm_map(corpus, function(x) removeWords(x, stopwords(&quot;english&quot;)))
+dtm &lt;- DocumentTermMatrix(corpus, control=list(bounds=list(global=c(5, Inf))))
+
+# remove messages with no topic terms
+row.sum &lt;- apply(dtm , 1, sum)
+dtm.new   &lt;- dtm[row.sum &gt; 0, ]
+
+# fit topic model, k=20 topics
+lda &lt;- LDA(dtm.new, k=20, method=&quot;Gibbs&quot;, 
+           control=list(verbose=1000, seed=0, burnin=100, iter=5000))</code></pre>
 <pre><code>## K = 20; V = 4974; M = 9960
 ## Sampling 5100 iterations!
 ## Iteration 1000 ...
@@ -112,6 +145,8 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ## Iteration 4000 ...
 ## Iteration 5000 ...
 ## Gibbs sampling completed!</code></pre>
+<pre class="r"><code>terms &lt;- get_terms(lda, 10)
+terms # look pretty interpretable</code></pre>
 <pre><code>##       Topic 1     Topic 2     Topic 3  Topic 4    Topic 5      Topic 6    
 ##  [1,] &quot;president&quot; &quot;new&quot;       &quot;world&quot;  &quot;now&quot;      &quot;news&quot;       &quot;said&quot;     
 ##  [2,] &quot;obama&quot;     &quot;york&quot;      &quot;first&quot;  &quot;school&quot;   &quot;breaking&quot;   &quot;just&quot;     
@@ -156,17 +191,118 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ##  [8,] &quot;2015&quot;    &quot;without&quot;
 ##  [9,] &quot;another&quot; &quot;better&quot; 
 ## [10,] &quot;place&quot;   &quot;much&quot;</code></pre>
+<pre class="r"><code>topics &lt;- get_topics(lda, 3)
+topic1 &lt;- as.character(topics[1, ])
+topic2 &lt;- as.character(topics[2, ])
+topic3 &lt;- as.character(topics[3, ])
+nyt.fb$topic1 &lt;- topic1
+nyt.fb$topic2 &lt;- topic2
+nyt.fb$topic3 &lt;- topic3
+
+# write.csv(data.frame(topic1, topic2, topic3), file=&quot;topics.csv&quot;, row.names=F)</code></pre>
 <ol start="6" style="list-style-type: decimal">
-<li><p><strong>Search message content for some key words of interest, such as “israel”, “yankees”, “trump”, etc. For each key word, create a new variable for whether the message content contains that word.</strong> Add these variables to the <code>nyt.fb</code> data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.</p></li>
-<li><p><strong>Using the file <code>lexicon.csv</code> we saw in the “text” module, extract a sentiment score for the content of each message</strong>. Add this score to the <code>nyt.fb</code> data frame.</p></li>
-<li><p><strong>Build at least one statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you’ve created in this exercise) EXCEPT the number of shares, counts, or likes.</strong> Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your <code>viral</code> variable), and then classify “viral” or not based on the predictions of that model.</p></li>
+<li><strong>Search message content for some key words of interest, such as “israel”, “yankees”, “trump”, etc. For each key word, create a new variable for whether the message content contains that word.</strong> Add these variables to the <code>nyt.fb</code> data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.</li>
 </ol>
+<pre class="r"><code>message &lt;- removePunctuation(tolower(nyt.fb$message))
+nyt.fb$israel &lt;- grepl(&quot;israel&quot;, message)
+nyt.fb$trump &lt;- grepl(&quot;trump&quot;, message)
+nyt.fb$hillary &lt;- grepl(&quot;hillary&quot;, message)
+nyt.fb$obama &lt;- grepl(&quot;barack|obama&quot;, message)
+nyt.fb$terror &lt;- grepl(&quot;terror|isis|isil|qaeda&quot;, message)
+nyt.fb$kill &lt;- grepl(&quot;kill|murder|shot&quot;, message)
+nyt.fb$debate &lt;- grepl(&quot;debat&quot;, message)
+
+# write.csv(nyt.fb[, c(&quot;israel&quot;, &quot;trump&quot;, &quot;hillary&quot;, &quot;obama&quot;, &quot;terror&quot;, &quot;kill&quot;, &quot;debate&quot;)], file=&quot;keywords.csv&quot;, row.names=F)</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li><strong>Using the file <code>lexicon.csv</code> we saw in the “text” module, extract a sentiment score for the content of each message</strong>. Add this score to the <code>nyt.fb</code> data frame.</li>
+</ol>
+<pre class="r"><code>lexicon &lt;- read.csv(&quot;lexicon.csv&quot;, stringsAsFactors=F)
+pos.words &lt;- lexicon$word[lexicon$polarity==&quot;positive&quot;]
+neg.words &lt;- lexicon$word[lexicon$polarity==&quot;negative&quot;]
+
+get_sentiment &lt;- function(message, pos.words, neg.words){
+    # count number of positive and negative word matches in message
+    words.list &lt;- strsplit(message, &quot; +&quot;)
+    pos.matches &lt;- sapply(words.list, function(w) sum(w %in% pos.words))
+    neg.matches &lt;- sapply(words.list, function(w) sum(w %in% neg.words))
+    return(pos.matches - neg.matches)
+}
+
+message &lt;- removePunctuation(tolower(nyt.fb$message))
+sent.score &lt;- get_sentiment(message, pos.words, neg.words)
+nyt.fb$sent.score &lt;- sent.score
+
+# write.csv(data.frame(sent.score), file=&quot;sent-score.csv&quot;, row.names=F)</code></pre>
+<ol start="8" style="list-style-type: decimal">
+<li><strong>Build at least one statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you’ve created in this exercise) EXCEPT the number of shares, counts, or likes.</strong> Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your <code>viral</code> variable), and then classify “viral” or not based on the predictions of that model.</li>
+</ol>
+<pre class="r"><code># SVM example
+library(e1071)
+svm.viral &lt;- svm(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb)
+# use log of total response count
+svm.resp &lt;- svm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                  hour + topic1 + topic2 + topic3 + israel + trump + 
+                  hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)
+
+# regression example
+glm.viral &lt;- glm(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb, family=binomial(logit))
+lm.resp &lt;- lm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                hour + topic1 + topic2 + topic3 + israel + trump + 
+                hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)
+
+# random forest example
+library(randomForest)</code></pre>
 <pre><code>## randomForest 4.6-12
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>rf.viral &lt;- randomForest(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb)
+rf.resp &lt;- randomForest(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                          hour + topic1 + topic2 + topic3 + israel + trump + 
+                          hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)</code></pre>
 <ol start="9" style="list-style-type: decimal">
 <li><strong>Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?</strong></li>
 </ol>
+<pre class="r"><code>set.seed(0)
+train.sample &lt;- sample(nrow(nyt.fb), floor(.75 * nrow(nyt.fb)))
+train.data &lt;- nyt.fb[train.sample, ]
+test.data &lt;- nyt.fb[-train.sample, ]
+
+svm.resp &lt;- svm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                  hour + topic1 + topic2 + topic3 + israel + trump + 
+                  hillary + obama + terror + kill + debate + sent.score, data=train.data)
+lm.resp &lt;- lm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                hour + topic1 + topic2 + topic3 + israel + trump + 
+                hillary + obama + terror + kill + debate + sent.score, data=train.data)
+rf.resp &lt;- randomForest(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                          hour + topic1 + topic2 + topic3 + israel + trump + 
+                          hillary + obama + terror + kill + debate + sent.score, data=train.data)
+
+# get predictions on test data
+svm.resp.pred &lt;- predict(svm.resp, test.data)
+lm.resp.pred &lt;- predict(lm.resp, test.data)
+rf.resp.pred &lt;- predict(rf.resp, test.data)
+
+resp_to_viral &lt;- function(resp, cutoff=10000, logged=TRUE) {
+  if(logged)
+    resp &lt;- exp(resp)
+  viral &lt;- resp &gt; cutoff
+  return(viral)
+}
+
+# set cutoff so that % predicted viral in test data is the same as in training data
+svm.viral.pred &lt;- resp_to_viral(svm.resp.pred, cutoff=2250) 
+mean(svm.viral.pred)</code></pre>
 <pre><code>## [1] 0.05100402</code></pre>
+<pre class="r"><code>lm.viral.pred &lt;- resp_to_viral(lm.resp.pred, cutoff=2450) 
+rf.viral.pred &lt;- resp_to_viral(rf.resp.pred, cutoff=2480) 
+
+# evaluate predictions
+library(caret)</code></pre>
 <pre><code>## Loading required package: lattice
 ## Loading required package: ggplot2
 ## 
@@ -179,6 +315,7 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ## The following object is masked from 'package:NLP':
 ## 
 ##     annotate</code></pre>
+<pre class="r"><code>confusionMatrix(test.data$viral, svm.viral.pred)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -205,6 +342,7 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ##                                           
 ##        'Positive' Class : FALSE           
 ## </code></pre>
+<pre class="r"><code>confusionMatrix(test.data$viral, lm.viral.pred)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -231,6 +369,7 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ##                                          
 ##        'Positive' Class : FALSE          
 ## </code></pre>
+<pre class="r"><code>confusionMatrix(test.data$viral, rf.viral.pred)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -260,6 +399,9 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 <ol start="10" style="list-style-type: decimal">
 <li><strong>Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral</strong>.</li>
 </ol>
+<pre class="r"><code>correct.pred &lt;- sample(which(test.data$viral &amp; svm.viral.pred), 1)
+incorrect.pred &lt;- sample(which(!test.data$viral &amp; svm.viral.pred), 1)
+test.data[correct.pred, ]</code></pre>
 <pre><code>##         from_id          from_name
 ## 2857 5281959998 The New York Times
 ##                                                                                                                                                                                                                                                                                                                                                                       message
@@ -274,6 +416,7 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 ## 2857    11   03  TRUE      8      1     11  FALSE FALSE   FALSE  TRUE
 ##      terror  kill debate sent.score
 ## 2857   TRUE FALSE  FALSE          0</code></pre>
+<pre class="r"><code>test.data[incorrect.pred, ]</code></pre>
 <pre><code>##         from_id          from_name
 ## 6835 5281959998 The New York Times
 ##                                                                                                                                                                                                              message
