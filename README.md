@@ -23,7 +23,7 @@
 
 ## Description
 
-This is a three-day short course covering key topics at the intersection of Data Science and Social Science. Each day will be structured as a 6-hour project-based course focused on instruction and implementation of data science methodology with real social science data. This course will cover an introduction to the R programming and statistical language, modeling and visualization, automated textual analysis, social network analysis, and web scraping & APIs. 
+This is a three-day short course covering key topics at the intersection of Data Science and Social Science. Each day is structured as a series of modules that will combine instruction on data science methods with implementation using real data in R.  his course covers an introduction to the R programming and statistical language, modeling and visualization, automated textual analysis, social network analysis, and web scraping & APIs. 
 
 ## Setup and Preparation
 
@@ -50,6 +50,6 @@ You can also subscribe to the repository if you have [a GitHub account](https://
 | Jan 20 | 13:30-16:30  | [Data Modeling and Visualization](modeling-viz/README.md) | Dan |
 | Jan 21 | 09:00-12:00  | [Automated Textual Analysis](text/README.md)              | Pablo |
 | Jan 21 | 13:30-16:30  | [Social Network Analysis](sna/README.md)                  | Pablo |
-| Jan 22 | 09:00-12:00  | [Web scraping & APIs](scraping/README.md)                 | Both |
-| Jan 22 | 13:30-16:30  | [Research Practicum](practicum/README.md)                 | Both |
+| Jan 22 | 09:00-12:00  | [Web scraping & APIs](scraping/README.md)                 | Pablo |
+| Jan 22 | 13:30-16:30  | [Research Practicum](practicum/README.md)                 | Dan |
 
