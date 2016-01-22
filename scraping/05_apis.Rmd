@@ -7,7 +7,10 @@ output: html_document
 
 ### Scraping web data from APIs
 
-To understand how APIs work, we'll take the New York Times API as an example. This API allows users to search articles by string and dates, and returns counts of articles and a short description of each article (but not the full text). You can find the documentation [here](http://developer.nytimes.com/docs/read/article_search_api_v2).
+To understand how APIs work, we'll take the New York Times API as an example. This API allows users to search articles by string and dates, and returns counts of articles and a short description of each article (but not the full text). You can find the documentation [here](http://developer.nytimes.com/docs/read/article_search_api_v2). Get a new API token and paste it here:
+```{r, eval=FALSE}
+apikey <- 'NYT_API_KEY'
+```
 
 The fist step is to identify the base url and the parameters that we can use to query the API. Now we can do a first API call using the `httr` package. (You can use my API key for now, let's hope we don't hit the rate limit!)
 
@@ -15,8 +18,7 @@ The fist step is to identify the base url and the parameters that we can use to 
 base_url <- "http://api.nytimes.com/svc/search/v2/articlesearch.json"
 # install.packages("httr")
 library(httr)
-r <- GET(base_url, query=list(q="inequality",
-    "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177'))
+r <- GET(base_url, query=list(q="inequality","api-key"=apikey))
 r
 ```
 
@@ -46,7 +48,7 @@ If we check the documentation, we find that we can subset by date with the `begi
 
 ```{r}
 r <- GET(base_url, query=list(q="inequality",
-                              "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                              "api-key"=apikey,
                               "begin_date"=20140101,
                               "end_date"=20141231))
 json <- content(r, 'parsed')
@@ -62,7 +64,7 @@ This would be a first draft of that function:
 ```{r}
 nyt_count <- function(q, date1, date2){
   r <- GET(base_url, query=list(q=q,
-                                "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                                "api-key"=apikey,
                                 "begin_date"=date1,
                                 "end_date"=date2))
   json <- content(r, "parsed")
@@ -100,7 +102,7 @@ Oops! What happened? Why the error? We're querying the API too fast. Let's modif
 ```{r}
 nyt_count <- function(q, date1, date2){
   r <- GET(base_url, query=list(q=q,
-                                "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                                "api-key"=apikey,
                                 "begin_date"=date1,
                                 "end_date"=date2))
   json <- content(r, "parsed")
@@ -109,7 +111,7 @@ nyt_count <- function(q, date1, date2){
     Sys.sleep(2) # wait a couple of seconds
     # try again:
     r <- GET(base_url, query=list(q=q,
-                  "api-key"='05e7c6c6f4896fba6c08531808067326:10:67731177',
+                  "api-key"=apikey,
                   "begin_date"=date1,
                   "end_date"=date2))
     json <- content(r, "parsed")
