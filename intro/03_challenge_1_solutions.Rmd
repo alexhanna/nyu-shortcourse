@@ -7,6 +7,10 @@ output: html_document
 
 Write commands that help you answer the following questions using the dataset `humansofnewyork.csv`. Read this data into `R` and answer the questions below, trying not to rely too much on the previous code we used!
 
+### Sample solutions
+
+Please note there are many possible (equally excellent) solutions! 
+
 ```{r}
 hony <- read.csv("./humansofnewyork.csv", stringsAsFactors=FALSE) # read in data, character vectors treated as character vectors (not factors)
 str(hony) # examine its structure

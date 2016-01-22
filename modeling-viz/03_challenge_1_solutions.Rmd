@@ -1,0 +1,95 @@
+---
+title: "Challenge 1"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Try not to look at the previous code we used!
+
+### Sample solutions
+
+Please note there are many possible (equally excellent) solutions! 
+
+```{r}
+congress <- read.csv("../intro/congress-terms.csv", stringsAsFactors=F)
+
+# remove entries where party is not "I", "R", "D"
+congress <- subset(congress, party %in% c("D", "I", "R"))
+congress$age <- as.numeric(congress$age) # convert age into numeric variable
+```
+
+
+1. Make a time series plot showing Democratic/Republican control of congress over time. By varying color, line thickness, or other graphical properties, make this plot also convey the average age of the congressmen representing each party over time.
+
+```{r}
+dems <- subset(congress, party == "D")
+reps <- subset(congress, party == "R")
+dems.num <- tapply(dems$party, dems$congress, length)
+reps.num <- tapply(reps$party, reps$congress, length)
+dems.age <- tapply(dems$age, dems$congress, mean)
+reps.age <- tapply(reps$age, reps$congress, mean)
+congress.num <- as.numeric(names(dems.age))
+congress.agg <- data.frame(congress.num, dems.num, reps.num, dems.age, reps.age)
+
+library(ggplot2)
+congress.plot <- ggplot(data=congress.agg)
+
+# plot out just democrats' number and age
+dems.plot <- congress.plot + 
+  geom_line(data=congress.agg, 
+            aes(x=congress.num, y=dems.num, color=dems.age, size=dems.age)) +
+  scale_color_gradient(low="gray95", high="gray20") + 
+  guides(color=guide_legend(), size=guide_legend())
+# add in republicans
+both.plot <- dems.plot + 
+  geom_line(data=congress.agg,
+            aes(x=congress.num, y=reps.num, color=reps.age, size=reps.age))
+both.plot
+
+# cleaning up axis/legend labels
+both.plot <- both.plot + 
+  guides(fill=guide_legend(title="age")) + labs(x="congress number", y="# members", title="Congressmen over time")
+
+# label the parties
+both.plot + annotate("text", x=c(100, 100), y=c(200, 350), label=c("Republicans", "Democrats"))
+```
+
+2. Write a function that, for a particular congress (e.g. congress 113), shows a map of the party breakdown by state.
+
+```{r}
+library(maps)
+states <- map_data("state") # long/lat information for all states
+states <- subset(states, region != "district of columbia") # remove DC, which has no congressmen
+states$state <- state.abb[match(states$region, tolower(state.name))]
+
+map_parties <- function(num) { # input a congress number
+  this.congress <- subset(congress, congress == num)
+
+  #get party breakdown by state
+  state.dems <- tapply(this.congress$party, this.congress$state, function(x) sum(x == "D"))
+  state.reps <- tapply(this.congress$party, this.congress$state, function(x) sum(x == "R"))
+  this.data <- data.frame(state=names(state.dems),
+                          control=state.dems / (state.dems + state.reps))
+  
+  map.data <- merge(states, this.data, by="state", all.x=TRUE)
+
+  state.map <- ggplot(map.data, aes(x=long, y=lat, group=group, fill=control)) + 
+    geom_polygon(color="white", size = 0.2) + 
+    theme_bw() + 
+    scale_fill_gradient(low="red", high="blue", na.value="black") + 
+    guides(fill=guide_legend(title="% Democratic")) +
+  coord_map("mercator")
+  state.map
+}
+
+map_parties(80) # wow!
+map_parties(113) # most recent congress in data set
+```
+
+
+
+
+
+
+```
