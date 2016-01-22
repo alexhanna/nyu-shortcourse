@@ -5,7 +5,7 @@ date: "January 22, 2016"
 output: html_document
 ---
 
-In this exercise, we're going to explore what makes news stories go viral. The data we'll use is from the New York Times facebook page. 
+In this exercise, we're going to explore what makes news stories go viral. The data we'll use is from the New York Times facebook page. At the end of the session, we'll ask you to present your results to the class very briefly (2-3 min) and casually (just the html output of this Rmd file will do). **Bolded items** below should be part of your presentation!
 
 1. Try downloading a small sample of data from the NYT facebook page.
 
@@ -22,36 +22,187 @@ nyt.fb <- getPage(page="nytimes", token=auth_token, n=100, since="2015/01/01")
 
 2. Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=TRUE}
 nyt.fb <- read.csv("./nyt-fb.csv", stringsAsFactors=FALSE)
 
-# dan
 str(nyt.fb)
 ```
 
 3. (Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).
 
-```{r, echo=FALSE}
-
-# dan
+```{r, echo=FALSE, cache=TRUE}
 month <- substr(nyt.fb$created_time, 6, 7)
 hour <- substr(nyt.fb$created_time, 12, 13)
 nyt.fb <- data.frame(nyt.fb, month, hour)
+
+# write.csv(data.frame(month, hour), file="month-hour.csv", row.names=F)
 ```
 
 4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.
 
-```{r, echo=FALSE}
-
-# dan
+```{r, echo=FALSE, cache=TRUE}
 total.resp <- nyt.fb$likes_count + nyt.fb$shares_count + nyt.fb$comments_count
 quantile(total.resp, .95) # top 5% total share/count/comment total
-nyt.fb$viral <- total.resp > 10000
+viral <- total.resp > 10000
+nyt.fb$viral <- viral
+
+# write.csv(data.frame(viral), file="viral.csv", row.names=F)
 ```
 
 #### Please complete at least 2 out of the following 3 tasks
 
-5. Fit a topic model to the content of the messages that accompany each post. 
+5. **Fit a topic model to the message content of each post.** Incorporate the results as a feature you add to your `nyt.fb` data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.). Can you interpret the topics based on their associated terms?
 
-6. 
+```{r, echo=FALSE, cache=TRUE}
+library(topicmodels)
+library(tm)
+
+# nyt.fb$message <- gsub('\\"', "", x=nyt.fb$message)
+corpus <- VCorpus(VectorSource(nyt.fb$message))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, function(x) removeWords(x, stopwords("english")))
+dtm <- DocumentTermMatrix(corpus, control=list(bounds=list(global=c(5, Inf))))
+
+# remove messages with no topic terms
+row.sum <- apply(dtm , 1, sum)
+dtm.new   <- dtm[row.sum > 0, ]
+
+# fit topic model, k=20 topics
+lda <- LDA(dtm.new, k=20, method="Gibbs", 
+           control=list(verbose=1000, seed=0, burnin=100, iter=5000))
+terms <- get_terms(lda, 10)
+terms # look pretty interpretable
+
+topics <- get_topics(lda, 3)
+topic1 <- as.character(topics[1, ])
+topic2 <- as.character(topics[2, ])
+topic3 <- as.character(topics[3, ])
+nyt.fb$topic1 <- topic1
+nyt.fb$topic2 <- topic2
+nyt.fb$topic3 <- topic3
+
+# write.csv(data.frame(topic1, topic2, topic3), file="topics.csv", row.names=F)
+```
+
+6. **Search message content for some key words of interest, such as "israel", "yankees", "trump", etc. For each key word, create a new variable for whether the message content contains that word.** Add these variables to the `nyt.fb` data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.
+
+```{r, echo=FALSE, cache=TRUE}
+message <- removePunctuation(tolower(nyt.fb$message))
+nyt.fb$israel <- grepl("israel", message)
+nyt.fb$trump <- grepl("trump", message)
+nyt.fb$hillary <- grepl("hillary", message)
+nyt.fb$obama <- grepl("barack|obama", message)
+nyt.fb$terror <- grepl("terror|isis|isil|qaeda", message)
+nyt.fb$kill <- grepl("kill|murder|shot", message)
+nyt.fb$debate <- grepl("debat", message)
+
+# write.csv(nyt.fb[, c("israel", "trump", "hillary", "obama", "terror", "kill", "debate")], file="keywords.csv", row.names=F)
+```
+
+7. **Using the file `lexicon.csv` we saw in the "text" module, extract a sentiment score for the content of each message**. Add this score to the `nyt.fb` data frame.
+
+```{r, echo=FALSE, cache=TRUE}
+lexicon <- read.csv("lexicon.csv", stringsAsFactors=F)
+pos.words <- lexicon$word[lexicon$polarity=="positive"]
+neg.words <- lexicon$word[lexicon$polarity=="negative"]
+
+get_sentiment <- function(message, pos.words, neg.words){
+    # count number of positive and negative word matches in message
+    words.list <- strsplit(message, " +")
+    pos.matches <- sapply(words.list, function(w) sum(w %in% pos.words))
+    neg.matches <- sapply(words.list, function(w) sum(w %in% neg.words))
+    return(pos.matches - neg.matches)
+}
+
+message <- removePunctuation(tolower(nyt.fb$message))
+sent.score <- get_sentiment(message, pos.words, neg.words)
+nyt.fb$sent.score <- sent.score
+
+# write.csv(data.frame(sent.score), file="sent-score.csv", row.names=F)
+```
+
+
+8. **Build at least one statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you've created in this exercise) EXCEPT the number of shares, counts, or likes.** Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your `viral` variable), and then classify "viral" or not based on the predictions of that model.
+
+```{r, echo=FALSE, cache=TRUE}
+# SVM example
+library(e1071)
+svm.viral <- svm(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb)
+# use log of total response count
+svm.resp <- svm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                  hour + topic1 + topic2 + topic3 + israel + trump + 
+                  hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)
+
+# regression example
+glm.viral <- glm(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb, family=binomial(logit))
+lm.resp <- lm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                hour + topic1 + topic2 + topic3 + israel + trump + 
+                hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)
+
+# random forest example
+library(randomForest)
+rf.viral <- randomForest(as.factor(viral) ~ month + hour + topic1 + topic2 + topic3 + 
+                   israel + trump + hillary + obama + terror + kill + 
+                   debate + sent.score, data=nyt.fb)
+rf.resp <- randomForest(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                          hour + topic1 + topic2 + topic3 + israel + trump + 
+                          hillary + obama + terror + kill + debate + sent.score, data=nyt.fb)
+```
+
+9. **Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?**
+
+```{r, echo=FALSE, cache=TRUE}
+set.seed(0)
+train.sample <- sample(nrow(nyt.fb), floor(.75 * nrow(nyt.fb)))
+train.data <- nyt.fb[train.sample, ]
+test.data <- nyt.fb[-train.sample, ]
+
+svm.resp <- svm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                  hour + topic1 + topic2 + topic3 + israel + trump + 
+                  hillary + obama + terror + kill + debate + sent.score, data=train.data)
+lm.resp <- lm(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                hour + topic1 + topic2 + topic3 + israel + trump + 
+                hillary + obama + terror + kill + debate + sent.score, data=train.data)
+rf.resp <- randomForest(I(log(shares_count + likes_count + comments_count)) ~ month + 
+                          hour + topic1 + topic2 + topic3 + israel + trump + 
+                          hillary + obama + terror + kill + debate + sent.score, data=train.data)
+
+# get predictions on test data
+svm.resp.pred <- predict(svm.resp, test.data)
+lm.resp.pred <- predict(lm.resp, test.data)
+rf.resp.pred <- predict(rf.resp, test.data)
+
+resp_to_viral <- function(resp, cutoff=10000, logged=TRUE) {
+  if(logged)
+    resp <- exp(resp)
+  viral <- resp > cutoff
+  return(viral)
+}
+
+# set cutoff so that % predicted viral in test data is the same as in training data
+svm.viral.pred <- resp_to_viral(svm.resp.pred, cutoff=2250) 
+mean(svm.viral.pred)
+lm.viral.pred <- resp_to_viral(lm.resp.pred, cutoff=2450) 
+rf.viral.pred <- resp_to_viral(rf.resp.pred, cutoff=2480) 
+
+# evaluate predictions
+library(caret)
+confusionMatrix(test.data$viral, svm.viral.pred)
+confusionMatrix(test.data$viral, lm.viral.pred)
+confusionMatrix(test.data$viral, rf.viral.pred)
+```
+
+10. **Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral**.
+
+```{r, echo=FALSE, cache=TRUE}
+correct.pred <- sample(which(test.data$viral & svm.viral.pred), 1)
+incorrect.pred <- sample(which(!test.data$viral & svm.viral.pred), 1)
+test.data[correct.pred, ]
+test.data[incorrect.pred, ]
+```
 

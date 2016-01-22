@@ -24,56 +24,109 @@ nyt.fb <- getPage(page="nytimes", token=auth_token, n=100, since="2015/01/01")
 
 ```{r, echo=FALSE}
 nyt.fb <- read.csv("./nyt-fb.csv", stringsAsFactors=FALSE)
+
+# YOUR CODE HERE
 ```
 
 3. (Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).
 
 ```{r, echo=FALSE}
+# YOUR CODE HERE
 
+# if you're having trouble, load the month / hour data and move to the next question:
+# month.hour <- read.csv(file="month-hour.csv", stringsAsFactors=FALSE)
 ```
 
-4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.**
+4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.
 
 ```{r, echo=FALSE}
+# YOUR CODE HERE
 
+# if you're having trouble, load a sample 'viral' indicator and move to the next question
+# viral <- read.csv(file="viral.csv", stringsAsFactors=FALSE)
 ```
 
-#### Please complete at least 2 out of the following 3 tasks
+#### Please complete at least 2 out of the following 3 tasks (5-7)
 
-5. **Fit a topic model to the message content of each post.** Incorporate the results as a feature you add to your `nyt.fb` data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.).
+5. **Fit a topic model to the message content of each post.** Incorporate the results as a feature you add to your `nyt.fb` data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.). Can you interpret the topics based on their associated terms?
 
 ```{r, echo=FALSE}
+library(topicmodels)
+library(tm)
 
+# YOUR CODE HERE
+
+# try functions removePunctuation, tolower
+# something to remove common words such as "the", "is", etc.:
+#
+# removeWords("this is a sentence that contains many common words", stopwords("english"))
+
+# remove messages with no topic terms in a Document-Term-Matrix (dtm):
+#
+# row.sum <- apply(dtm , 1, sum)
+# dtm   <- dtm[row.sum > 0, ]
+# nyt.fb <- nyt.fb[row.sum > 0, ] # remove corresponding rows in nyc.fb data
+
+# if you're having trouble, load a data set with topic variables for the messages
+# topics <-  read.csv(file="topics.csv", stringsAsFactors=F)
 ```
 
 6. **Search message content for some key words of interest, such as "israel", "yankees", "trump", etc. For each key word, create a new variable for whether the message content contains that word.** Add these variables to the `nyt.fb` data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.
 
 ```{r, echo=FALSE}
+# YOUR CODE HERE
 
+# if you're having trouble, load a data set with keyword (and topic) variables
+# keywords <- read.csv(file="keywords.csv", stringsAsFactors=FALSE)
 ```
 
 7. **Using the file `lexicon.csv` we saw in the "text" module, extract a sentiment score for the content of each message**. Add this score to the `nyt.fb` data frame.
 
 ```{r, echo=FALSE}
+lexicon <- read.csv("lexicon.csv", stringsAsFactors=F)
+# YOUR CODE HERE
 
+# if you're having trouble, load a data set with sentiment score (and keyword/topic variables)
+# sentiment <- read.csv(file="sent-score.csv", stringsAsFactors=FALSE)
 ```
 
 
-8. **Build a statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you've created in this exercise) EXCEPT the number of shares, counts, or likes.** Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your `viral` variable), and then classify "viral" or not based on the predictions of that model.
+8. **Build at least one statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you've created in this exercise) EXCEPT the number of shares, counts, or likes.** Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your `viral` variable), and then classify "viral" or not based on the predictions of that model.
 
 ```{r, echo=FALSE}
+# YOUR CODE HERE
 
+# to use SVM
+library(e1071)
+# svm.model <- svm(...)
+
+# to use random forest
+library(randomForest)
+# rf.model <- randomForest(...)
 ```
 
-9. **Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model.** 
+9. **Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?**
 
 ```{r, echo=FALSE}
+# YOUR CODE HERE
 
+# to split data into training/test sets:
+# train.sample <- sample(nrow(nyt.fb), floor(.75 * nrow(nyt.fb)))
+# train.data <- nyt.fb[train.sample, ]
+# test.data <- nyt.fb[-train.sample, ]
+
+# to get predictions for any model on test data
+# my.pred <- predict(my.model, test.data)
+
+# evaluate predictions
+# a good diagnostic:
+# library(caret)
+# confusionMatrix(my.pred, truth)
 ```
 
-10. **Find 2 examples of posts that you predict are viral**.
+10. **Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral**.
 
 ```{r, echo=FALSE}
-
+# YOUR CODE HERE
 ```
 

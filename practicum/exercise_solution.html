@@ -80,16 +80,82 @@ img {
 auth_token &lt;- &quot;abc123&quot; 
 nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&quot;2015/01/01&quot;)</code></pre>
 <ol start="2" style="list-style-type: decimal">
-<li><p>Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.</p></li>
+<li>Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.</li>
+</ol>
+<pre><code>## 'data.frame':    9960 obs. of  10 variables:
+##  $ from_id       : num  5.28e+09 5.28e+09 5.28e+09 5.28e+09 5.28e+09 ...
+##  $ from_name     : chr  &quot;The New York Times&quot; &quot;The New York Times&quot; &quot;The New York Times&quot; &quot;The New York Times&quot; ...
+##  $ message       : chr  &quot;\&quot;What if our toxic pattern was how well we got along and how much we loved each other?\&quot;&quot; &quot;If you're on the East Coast, here are The New York Times Food's delicious ways to hunker down before the storm rolls in.&quot; &quot;“At the time when I came into this country, they didn’t give us money or anything like that. You came in. You put your money in&quot;| __truncated__ &quot;\&quot;It's OK, we have a really great water, from Australia.\&quot;&quot; ...
+##  $ created_time  : chr  &quot;2016-01-22T00:25:00+0000&quot; &quot;2016-01-21T23:55:00+0000&quot; &quot;2016-01-21T23:25:00+0000&quot; &quot;2016-01-21T22:55:00+0000&quot; ...
+##  $ type          : chr  &quot;link&quot; &quot;link&quot; &quot;photo&quot; &quot;link&quot; ...
+##  $ link          : chr  &quot;http://nyti.ms/1P8WA8w&quot; &quot;http://cooking.nytimes.com/68861692-nyt-cooking/922671-cooking-for-the-storm?smid=fb-nytimes&amp;smtyp=cur&quot; &quot;https://www.facebook.com/nytimes/photos/a.283559809998.33779.5281959998/10150729101899999/?type=3&quot; &quot;http://nyti.ms/1OIM2th&quot; ...
+##  $ id            : chr  &quot;5281959998_10150730340399999&quot; &quot;5281959998_10150730161409999&quot; &quot;5281959998_10150729101899999&quot; &quot;5281959998_10150730302924999&quot; ...
+##  $ likes_count   : int  128 438 106 478 322 481 293 4774 190 228 ...
+##  $ comments_count: int  8 32 36 46 161 22 28 312 28 35 ...
+##  $ shares_count  : int  24 202 20 98 76 91 204 1280 50 49 ...</code></pre>
+<ol start="3" style="list-style-type: decimal">
 <li><p>(Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).</p></li>
 <li><p><strong>Come up with criteria for determining whether a post is “viral”.</strong> For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable <code>viral</code> based on this and add it to your data frame.</p></li>
 </ol>
-<div id="please-complete-at-least-2-out-of-the-following-3-tasks-5-7" class="section level4">
-<h4>Please complete at least 2 out of the following 3 tasks (5-7)</h4>
+<pre><code>##     95% 
+## 10928.4</code></pre>
+<div id="please-complete-at-least-2-out-of-the-following-3-tasks" class="section level4">
+<h4>Please complete at least 2 out of the following 3 tasks</h4>
 <ol start="5" style="list-style-type: decimal">
 <li><strong>Fit a topic model to the message content of each post.</strong> Incorporate the results as a feature you add to your <code>nyt.fb</code> data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.). Can you interpret the topics based on their associated terms?</li>
 </ol>
-<pre><code>## Loading required package: NLP</code></pre>
+<pre><code>## K = 20; V = 4974; M = 9960
+## Sampling 5100 iterations!
+## Iteration 1000 ...
+## Iteration 2000 ...
+## Iteration 3000 ...
+## Iteration 4000 ...
+## Iteration 5000 ...
+## Gibbs sampling completed!</code></pre>
+<pre><code>##       Topic 1     Topic 2     Topic 3  Topic 4    Topic 5      Topic 6    
+##  [1,] &quot;president&quot; &quot;new&quot;       &quot;world&quot;  &quot;now&quot;      &quot;news&quot;       &quot;said&quot;     
+##  [2,] &quot;obama&quot;     &quot;york&quot;      &quot;first&quot;  &quot;school&quot;   &quot;breaking&quot;   &quot;just&quot;     
+##  [3,] &quot;barack&quot;    &quot;times&quot;     &quot;time&quot;   &quot;children&quot; &quot;said&quot;       &quot;get&quot;      
+##  [4,] &quot;house&quot;     &quot;opinion&quot;   &quot;city&quot;   &quot;work&quot;     &quot;two&quot;        &quot;good&quot;     
+##  [5,] &quot;white&quot;     &quot;read&quot;      &quot;game&quot;   &quot;money&quot;    &quot;officials&quot;  &quot;going&quot;    
+##  [6,] &quot;americans&quot; &quot;section&quot;   &quot;series&quot; &quot;come&quot;     &quot;federal&quot;    &quot;something&quot;
+##  [7,] &quot;john&quot;      &quot;writes&quot;    &quot;major&quot;  &quot;even&quot;     &quot;found&quot;      &quot;people&quot;   
+##  [8,] &quot;deal&quot;      &quot;board&quot;     &quot;sports&quot; &quot;parents&quot;  &quot;government&quot; &quot;really&quot;   
+##  [9,] &quot;american&quot;  &quot;editorial&quot; &quot;team&quot;   &quot;less&quot;     &quot;case&quot;       &quot;like&quot;     
+## [10,] &quot;will&quot;      &quot;nicholas&quot;  &quot;since&quot;  &quot;told&quot;     &quot;including&quot;  &quot;things&quot;   
+##       Topic 7  Topic 8    Topic 9  Topic 10       Topic 11 Topic 12 
+##  [1,] &quot;day&quot;    &quot;change&quot;   &quot;say&quot;    &quot;donald&quot;       &quot;like&quot;   &quot;state&quot;  
+##  [2,] &quot;back&quot;   &quot;health&quot;   &quot;women&quot;  &quot;trump&quot;        &quot;know&quot;   &quot;paris&quot;  
+##  [3,] &quot;life&quot;   &quot;court&quot;    &quot;men&quot;    &quot;hillary&quot;      &quot;want&quot;   &quot;attacks&quot;
+##  [4,] &quot;way&quot;    &quot;said&quot;     &quot;part&quot;   &quot;clinton&quot;      &quot;dont&quot;   &quot;isis&quot;   
+##  [5,] &quot;time&quot;   &quot;right&quot;    &quot;made&quot;   &quot;republican&quot;   &quot;need&quot;   &quot;across&quot; 
+##  [6,] &quot;home&quot;   &quot;francis&quot;  &quot;young&quot;  &quot;campaign&quot;     &quot;love&quot;   &quot;war&quot;    
+##  [7,] &quot;every&quot;  &quot;pope&quot;     &quot;theres&quot; &quot;debate&quot;       &quot;well&quot;   &quot;islamic&quot;
+##  [8,] &quot;quote&quot;  &quot;care&quot;     &quot;often&quot;  &quot;bernie&quot;       &quot;youre&quot;  &quot;trying&quot; 
+##  [9,] &quot;long&quot;   &quot;marriage&quot; &quot;woman&quot;  &quot;politics&quot;     &quot;didnt&quot;  &quot;friday&quot; 
+## [10,] &quot;making&quot; &quot;law&quot;      &quot;said&quot;   &quot;presidential&quot; &quot;story&quot;  &quot;europe&quot; 
+##       Topic 13   Topic 14   Topic 15 Topic 16   Topic 17  Topic 18
+##  [1,] &quot;look&quot;     &quot;american&quot; &quot;years&quot;  &quot;people&quot;   &quot;new&quot;     &quot;year&quot;  
+##  [2,] &quot;think&quot;    &quot;states&quot;   &quot;now&quot;    &quot;police&quot;   &quot;york&quot;    &quot;last&quot;  
+##  [3,] &quot;week&quot;     &quot;united&quot;   &quot;best&quot;   &quot;man&quot;      &quot;times&quot;   &quot;show&quot;  
+##  [4,] &quot;ahead&quot;    &quot;million&quot;  &quot;watch&quot;  &quot;black&quot;    &quot;via&quot;     &quot;photo&quot; 
+##  [5,] &quot;today&quot;    &quot;nearly&quot;   &quot;still&quot;  &quot;death&quot;    &quot;food&quot;    &quot;live&quot;  
+##  [6,] &quot;take&quot;     &quot;since&quot;    &quot;ago&quot;    &quot;killed&quot;   &quot;photo&quot;   &quot;photos&quot;
+##  [7,] &quot;national&quot; &quot;china&quot;    &quot;big&quot;    &quot;least&quot;    &quot;styles&quot;  &quot;david&quot; 
+##  [8,] &quot;season&quot;   &quot;plan&quot;     &quot;next&quot;   &quot;video&quot;    &quot;summer&quot;  &quot;follow&quot;
+##  [9,] &quot;spoilers&quot; &quot;nations&quot;  &quot;star&quot;   &quot;officers&quot; &quot;dining&quot;  &quot;see&quot;   
+## [10,] &quot;might&quot;    &quot;used&quot;     &quot;far&quot;    &quot;south&quot;    &quot;fashion&quot; &quot;sunday&quot;
+##       Topic 19  Topic 20 
+##  [1,] &quot;one&quot;     &quot;will&quot;   
+##  [2,] &quot;never&quot;   &quot;can&quot;    
+##  [3,] &quot;around&quot;  &quot;many&quot;   
+##  [4,] &quot;ever&quot;    &quot;may&quot;    
+##  [5,] &quot;history&quot; &quot;make&quot;   
+##  [6,] &quot;took&quot;    &quot;help&quot;   
+##  [7,] &quot;much&quot;    &quot;use&quot;    
+##  [8,] &quot;2015&quot;    &quot;without&quot;
+##  [9,] &quot;another&quot; &quot;better&quot; 
+## [10,] &quot;place&quot;   &quot;much&quot;</code></pre>
 <ol start="6" style="list-style-type: decimal">
 <li><p><strong>Search message content for some key words of interest, such as “israel”, “yankees”, “trump”, etc. For each key word, create a new variable for whether the message content contains that word.</strong> Add these variables to the <code>nyt.fb</code> data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.</p></li>
 <li><p><strong>Using the file <code>lexicon.csv</code> we saw in the “text” module, extract a sentiment score for the content of each message</strong>. Add this score to the <code>nyt.fb</code> data frame.</p></li>
@@ -98,9 +164,130 @@ nyt.fb &lt;- getPage(page=&quot;nytimes&quot;, token=auth_token, n=100, since=&q
 <pre><code>## randomForest 4.6-12
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <ol start="9" style="list-style-type: decimal">
-<li><p><strong>Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?</strong></p></li>
-<li><p><strong>Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral</strong>.</p></li>
+<li><strong>Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model(s). Can you show your predictions beat a baseline?</strong></li>
 </ol>
+<pre><code>## [1] 0.05100402</code></pre>
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2
+## 
+## Attaching package: 'ggplot2'
+## 
+## The following object is masked from 'package:randomForest':
+## 
+##     margin
+## 
+## The following object is masked from 'package:NLP':
+## 
+##     annotate</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction FALSE TRUE
+##      FALSE  2250  115
+##      TRUE    113   12
+##                                           
+##                Accuracy : 0.9084          
+##                  95% CI : (0.8964, 0.9195)
+##     No Information Rate : 0.949           
+##     P-Value [Acc &gt; NIR] : 1.0000          
+##                                           
+##                   Kappa : 0.047           
+##  Mcnemar's Test P-Value : 0.9472          
+##                                           
+##             Sensitivity : 0.95218         
+##             Specificity : 0.09449         
+##          Pos Pred Value : 0.95137         
+##          Neg Pred Value : 0.09600         
+##              Prevalence : 0.94900         
+##          Detection Rate : 0.90361         
+##    Detection Prevalence : 0.94980         
+##       Balanced Accuracy : 0.52333         
+##                                           
+##        'Positive' Class : FALSE           
+## </code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction FALSE TRUE
+##      FALSE  2231  134
+##      TRUE    102   23
+##                                          
+##                Accuracy : 0.9052         
+##                  95% CI : (0.893, 0.9164)
+##     No Information Rate : 0.9369         
+##     P-Value [Acc &gt; NIR] : 1.0000         
+##                                          
+##                   Kappa : 0.1136         
+##  Mcnemar's Test P-Value : 0.0436         
+##                                          
+##             Sensitivity : 0.9563         
+##             Specificity : 0.1465         
+##          Pos Pred Value : 0.9433         
+##          Neg Pred Value : 0.1840         
+##              Prevalence : 0.9369         
+##          Detection Rate : 0.8960         
+##    Detection Prevalence : 0.9498         
+##       Balanced Accuracy : 0.5514         
+##                                          
+##        'Positive' Class : FALSE          
+## </code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction FALSE TRUE
+##      FALSE  2245  120
+##      TRUE    107   18
+##                                           
+##                Accuracy : 0.9088          
+##                  95% CI : (0.8968, 0.9199)
+##     No Information Rate : 0.9446          
+##     P-Value [Acc &gt; NIR] : 1.0000          
+##                                           
+##                   Kappa : 0.0889          
+##  Mcnemar's Test P-Value : 0.4258          
+##                                           
+##             Sensitivity : 0.9545          
+##             Specificity : 0.1304          
+##          Pos Pred Value : 0.9493          
+##          Neg Pred Value : 0.1440          
+##              Prevalence : 0.9446          
+##          Detection Rate : 0.9016          
+##    Detection Prevalence : 0.9498          
+##       Balanced Accuracy : 0.5425          
+##                                           
+##        'Positive' Class : FALSE           
+## </code></pre>
+<ol start="10" style="list-style-type: decimal">
+<li><strong>Find an example of a viral post that you correctly predict is viral, and a non-viral post you incorrectly predict as viral</strong>.</li>
+</ol>
+<pre><code>##         from_id          from_name
+## 2857 5281959998 The New York Times
+##                                                                                                                                                                                                                                                                                                                                                                       message
+## 2857 &quot;We are reminded in this time of tragedy that the bonds of liberté and égalité and fraternité are not only values that the French people care so deeply about, but they are values that we share. And those values are going to endure far beyond any act of terrorism or the hateful vision of those who perpetrated the crimes this evening.&quot; — President Barack Obama
+##                  created_time  type
+## 2857 2015-11-14T03:06:12+0000 video
+##                                                            link
+## 2857 https://www.facebook.com/nytimes/videos/10150694294884999/
+##                                id likes_count comments_count shares_count
+## 2857 5281959998_10150694294884999       20063            903         2172
+##      month hour viral topic1 topic2 topic3 israel trump hillary obama
+## 2857    11   03  TRUE      8      1     11  FALSE FALSE   FALSE  TRUE
+##      terror  kill debate sent.score
+## 2857   TRUE FALSE  FALSE          0</code></pre>
+<pre><code>##         from_id          from_name
+## 6835 5281959998 The New York Times
+##                                                                                                                                                                                                              message
+## 6835 From instagram.com/nytimesfashion: Dominique Thaysen of Cape Town feeds a carrot to one of the tortoises at the Turtle Conservancy in Ojai, Southern California.\n\nPhoto: Jake Michaels for The New York Times
+##                  created_time  type
+## 6835 2015-07-13T23:25:01+0000 photo
+##                                                                                                   link
+## 6835 https://www.facebook.com/nytimes/photos/a.283559809998.33779.5281959998/10150624412599999/?type=3
+##                                id likes_count comments_count shares_count
+## 6835 5281959998_10150624412599999        2341             49          135
+##      month hour viral topic1 topic2 topic3 israel trump hillary obama
+## 6835    07   23 FALSE     17      2      4  FALSE FALSE   FALSE FALSE
+##      terror  kill debate sent.score
+## 6835  FALSE FALSE  FALSE          0</code></pre>
 </div>
 
 
