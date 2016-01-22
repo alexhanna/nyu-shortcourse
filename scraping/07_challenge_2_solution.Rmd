@@ -1,0 +1,90 @@
+---
+title: "Scraping: Challenge 2"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+The purpose of this challenge is to analyze the social media posts of the current Republican and Democratic candidates for president. To facilitate the data collection, focus on only two of them. If there's time at the end of this challenge, you can add a few more.
+
+Let's start with Twitter: download their most recent 1,000 tweets.
+
+```{r}
+library(smappR)
+getTimeline(screen_name="HillaryClinton", filename="clinton.json", n=1000, 
+            oauth_folder="~/git/data-science-workshop/scraping/credentials")
+getTimeline(screen_name="berniesanders", filename="sanders.json", n=1000, 
+            oauth_folder="~/git/data-science-workshop/scraping/credentials")
+```
+
+Now read their tweets. What are the 10 most popular hashtags for each of them?
+```{r}
+library(stringr)
+library(streamR)
+
+clinton <- parseTweets("clinton.json")
+sanders <- parseTweets("sanders.json")
+
+popularHashtags <- function(text){
+  ht <- str_extract_all(text, "#(\\d|\\w)+")
+  ht <- unlist(ht)
+  head(sort(table(ht), decreasing = TRUE))
+}
+
+popularHashtags(clinton$text)
+popularHashtags(sanders$text)
+```
+
+Prepare a comparison cloud showing what words are they using with different frequency. Note that in this case we probably don't want to get rid of punctuation. What do you learn?
+```{r}
+# Create large documents with posts
+clinton <- paste(clinton$text, collapse = " ")
+sanders    <- paste(sanders$text, collapse = " ")
+# Create DTM and preprocess
+library(tm)
+candidates <- VCorpus(VectorSource(c("Clinton" = clinton, "Sanders" = sanders)))
+candidates <- tm_map(candidates, content_transformer(tolower))
+candidates <- tm_map(candidates, stripWhitespace)
+dtm <- DocumentTermMatrix(candidates)
+## Label the two groups
+dtm$dimnames$Docs = c("Clinton", "Sanders")
+## Transpose matrix so that we can use it with comparison.cloud
+tdm <- t(dtm)
+## Compute TF-IDF transformation
+tdm <- as.matrix(weightTfIdf(tdm))
+
+## Display the two word clouds
+library(wordcloud)
+comparison.cloud(tdm, max.words=100, colors=c("red", "blue"))
+```
+
+Now turn to Facebook and scrape the most recent 1,000 posts from each candidates' page. Note that this can take a couple of minutes.
+```{r, eval=FALSE}
+fb_oauth <- 'XXXXXXXX'
+```
+```{r}
+library(Rfacebook)
+clinton <- getPage("HillaryClinton", token=fb_oauth, n=500) 
+sanders <- getPage("berniesanders", token=fb_oauth, n=500) 
+```
+
+This time, let's focus on their relative popularity. How many likes, comments, and shares do each of these candidates receive on their posts, on average? Who is more popular?
+```{r}
+summary(clinton[,c("likes_count", "comments_count", "shares_count")])
+summary(sanders[,c("likes_count", "comments_count", "shares_count")])
+```
+
+Finally, examine whether there is any trend on their popularity over time by creating a figure that displays the average number of likes receive on their post by month.
+```{r}
+clinton$month <- as.Date(paste0(substr(clinton$created_time, 1, 7), '-01'))
+sanders$month <- as.Date(paste0(substr(sanders$created_time, 1, 7), '-01'))
+agg.clinton <- aggregate(clinton$likes_count, by=list(month=clinton$month), FUN=mean)
+agg.sanders <- aggregate(sanders$likes_count, by=list(month=sanders$month), FUN=mean)
+par(mfrow=c(1,2))
+plot(agg.clinton$month, agg.clinton$x, type="l", ylim=c(0, 30000), xlab="month", ylab="likes (average)")
+plot(agg.sanders$month, agg.sanders$x, type="l", ylim=c(0, 30000), xlab="month", ylab="likes (average)")
+
+```
+
+
+

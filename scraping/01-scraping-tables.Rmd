@@ -22,7 +22,9 @@ The first step is to read the html code from the website we want to scrape, usin
 url <- paste("http://www.census.gov/population/international/data/idb/",
 	"region.php?N=%20Results%20&T=10&A=separate&RT=0&Y=2016&R=-1&C=US",
 	sep="")
-html <- read_html(url) # reading the html code into memory
+txt <- readLines(url)
+writeLines(txt, con=file('census.html'))
+html <- read_html('census.html') # reading the html code into memory
 html # not very informative
 substr(html_text(html), 1, 1000) # first 1000 characters
 ```
@@ -138,7 +140,7 @@ Now we're ready to generate the figure:
 library(ggplot2)
 p <- ggplot(pop, aes(x=rank, y=population, label=City))
 pq <- p + geom_point() + geom_text(hjust=-.1, size=3) +
-	scale_x_log10() + scale_y_log10()
+	scale_x_log10("log(rank)") + scale_y_log10("log(population)")
 pq
 ```
 

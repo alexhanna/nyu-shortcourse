@@ -1,0 +1,89 @@
+---
+title: "Scraping: Challenge 1"
+author: "Pablo Barbera"
+date: "January 22, 2016"
+output: html_document
+---
+
+The purpose of this challenge is to scrape the FDA website to identify the most common reasons for product recalls in 2015, as well as the companies that had the most product recalls.
+
+The first step will be to visit the website to understand its structure, and then read the HTML data into R.
+
+```{r}
+library(rvest)
+url <- 'http://www.fda.gov/Safety/Recalls/ArchiveRecalls/2015/default.htm'
+fda <- read_html(url)
+```
+
+Then, using the code we have used in the first part of the session, you should be able to extract the relevant information from the first page. Note that there are multiple pages, so we want to save the data into a list that we can populate later.
+
+```{r}
+# extracting tables
+tables <- html_table(fda)
+
+# finding right table
+str(tables)
+
+# we'll store it in a list to be populated with the tables from each page
+dataset <- list()
+dataset[[1]] <- tables[[1]]
+```
+
+Now, learn the structure of the URLs so that you can loop over each page
+
+```{r}
+for (i in 2:15){
+	# message with information about iteration of loop
+	message(i, '/', 15)
+	# preparing next URL
+	next_url <- paste(url, "?Page=", i, sep="")
+	fda <- read_html(next_url)
+	# extracting tables and adding to the list
+	dataset[[i]] <- html_table(fda)[[1]]
+	# waiting a couple of seconds before next iteration
+	Sys.sleep(2)
+}
+```
+
+The final step is to collapse the list of data frames into a single data frame.
+
+```{r}
+dataset <- do.call(rbind, dataset)
+str(dataset)
+```
+
+Now, write code to answer the following questions:
+
+1. What were the most common reasons or problems that led to product recalls?
+
+```{r}
+freq <- table(dataset[,"Reason/Problem"]) # frequency table
+freq <- sort(freq, decreasing=TRUE) # sort by frequency
+head(freq) # display most common categories
+```
+
+2. What is the company that got the most products recalled?
+
+```{r}
+freq <- table(dataset[,"Company"]) # frequency table
+freq <- sort(freq, decreasing=TRUE) # sort by frequency
+head(freq) # display most common categories
+```
+
+3. What is the main reason for product recalls in the company with the most recalls?
+
+```{r}
+table(dataset[dataset$Company=="Whole Foods Market", "Reason/Problem"])
+```
+
+4. How many products were recalled each month?
+
+```{r}
+dataset$month <- substr(dataset$Date, 1, 2)
+table(dataset$month)
+# another way to do this
+dataset$date2 <- as.Date(dataset$Date, format="%m/%d/%Y")
+table(format(dataset$date2, '%m'))
+plot(table(format(dataset$date2, '%m')), ylab="Product recalls per month")
+```
+
