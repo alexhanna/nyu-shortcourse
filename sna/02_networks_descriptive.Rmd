@@ -86,7 +86,7 @@ dist[1:5, 1:5]
 ```{r}
 edge_density(g)
 # 22*21 possible edges / 2 because it's undirected = 231 possible edges
-# but only 61 exist
+# but only 60 exist
 60/((22*21)/2)
 ```
 
