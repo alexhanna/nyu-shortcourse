@@ -41,9 +41,10 @@ head(school.tweets[,c("text")])
 
 6. How many tweets mention "mom" and "dad"?
 ```{r}
-df.tweets$mom <- grepl("mom", df.tweets$text, ignore.case=TRUE)
-df.tweets$dad <- grepl("dad", df.tweets$text, ignore.case=TRUE)
+df.tweets$mom <- grepl(" mom |^mom | mom| mom\\.", df.tweets$text, ignore.case=TRUE)
+df.tweets$dad <- grepl(" dad |^dad | dad$| dad\\.", df.tweets$text, ignore.case=TRUE)
 table(df.tweets$mom==TRUE & df.tweets$dad == TRUE)
+df.tweets$text[df.tweets$mom & df.tweets$dad]
 ```
 
 7. Display the first 15 tweets which mention "mom" and "dad". Note any peculiar findings.
