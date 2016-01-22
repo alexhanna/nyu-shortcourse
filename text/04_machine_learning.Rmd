@@ -38,6 +38,7 @@ We will replace "y" with "1" and "n" with "0" for the `bullying_traces` column, 
 df.tweets$bullying_traces[df.tweets$bullying_traces == 'y'] <- 1
 df.tweets$bullying_traces[df.tweets$bullying_traces == 'n'] <- 0
 df.tweets$bullying_traces <- as.numeric(df.tweets$bullying_traces)
+table(df.tweets$bullying_traces)
 ```
 
 We will use 90% of the data for the training set and 10% for the test set. Then, we will create a container which can be used with `RTextTools` models.

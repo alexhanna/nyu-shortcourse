@@ -17,7 +17,7 @@ g <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
 g <- decompose(g)[[1]]
 ```
 
-One of the most basic notions governing network formation is __homophily__, that is, the propensity of individuals to [cluster along common traits](https://en.wikipedia.org/wiki/Homophily), such as agen, gender, class, etc. 
+One of the most basic notions governing network formation is __homophily__, that is, the propensity of individuals to [cluster along common traits](https://en.wikipedia.org/wiki/Homophily), such as age, gender, class, etc. 
 
 We can measure the extent to which a network is homophilic along a specific variable by computing the __assortativity index__. Positive values indicate a positive propensity; negative values indicate negative propensity.
 
