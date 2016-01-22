@@ -1,0 +1,57 @@
+---
+title: "Data Science Exercise"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 22, 2016"
+output: html_document
+---
+
+In this exercise, we're going to explore what makes news stories go viral. The data we'll use is from the New York Times facebook page. 
+
+1. Try downloading a small sample of data from the NYT facebook page.
+
+% Note: the 'eval=FALSE' argument below prevents the R code from being run when you compile
+% the RMarkdown document, since it's slow
+```{r, eval=FALSE} 
+library(Rfacebook)
+# check the help for the function fbOauth (type into R console ?fbOAuth)
+# for instructions on obtaining a temporary access token
+# when you have a token, paste it in place of abc123" below
+auth_token <- "abc123" 
+nyt.fb <- getPage(page="nytimes", token=auth_token, n=100, since="2015/01/01")
+```
+
+2. Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.
+
+```{r, echo=FALSE}
+nyt.fb <- read.csv("./nyt-fb.csv", stringsAsFactors=FALSE)
+
+# dan
+str(nyt.fb)
+```
+
+3. (Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).
+
+```{r, echo=FALSE}
+
+# dan
+month <- substr(nyt.fb$created_time, 6, 7)
+hour <- substr(nyt.fb$created_time, 12, 13)
+nyt.fb <- data.frame(nyt.fb, month, hour)
+```
+
+4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.
+
+```{r, echo=FALSE}
+
+# dan
+total.resp <- nyt.fb$likes_count + nyt.fb$shares_count + nyt.fb$comments_count
+quantile(total.resp, .95) # top 5% total share/count/comment total
+nyt.fb$viral <- total.resp > 10000
+```
+
+#### Please complete at least 2 out of the following 3 tasks
+
+5. Fit a topic model to the content of the messages that accompany each post. 
+
+6. 
+

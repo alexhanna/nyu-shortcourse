@@ -1,0 +1,91 @@
+---
+title: "Challenge 2"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 20, 2016"
+output: html_document
+---
+
+Write commands that help you answer the following questions using the dataset `congress-terms.csv`. Please read the data into `R` and answer the questions below.
+
+### Sample solutions
+
+Please note there are many possible (equally excellent) solutions! 
+
+```{r}
+congress <- read.csv("./congress-terms.csv", stringsAsFactors=FALSE) # read in data
+```
+
+1. How many total congressmen have represented each political party?
+
+```{r}
+table(congress$party)
+# there are clearly some bad rows here, so let's eliminate them
+congress <- subset(congress, party %in% c("D", "I", "R")) # keep only dems, reps, inds
+table(congress$party)
+```
+
+2. Who was the youngest congressman elected and in how many congresses did he/she serve?
+
+```{r}
+min(congress$age) # youngest age
+youngest <- which.min(congress$age) # which row in the data has this age
+first.youngest <- congress$firstname[youngest]
+last.youngest <- congress$lastname[youngest]
+paste(first.youngest, last.youngest)
+sum(congress$firstname == first.youngest & congress$lastname == last.youngest) # total terms
+```
+
+
+3. In how many congresses did the House of Representatives have a Democratic majority?
+
+```{r}
+house <- subset(congress, chamber == "house")
+house.dems <- tapply(house$party, house$congress, function(x) sum(x == "D"))
+house.reps <- tapply(house$party, house$congress, function(x) sum(x == "R"))
+sum(house.dems > house.reps)
+```
+
+4. Which state has had the oldest congressmen on average?
+
+```{r}
+congress$age <- as.numeric(congress$age) # convert age into numeric variable
+age.table <- tapply(congress$age, congress$state, mean) # mean age by state
+age.table[which.max(age.table)]
+```
+
+5. For which state is the proportion of total Democrats throughout history closest to the proportion of Republicans?
+
+```{r}
+total.dems <- tapply(congress$party, congress$state, function(x) sum(x == "D"))
+total.reps <- tapply(congress$party, congress$state, function(x) sum(x == "R"))
+prop.dems <- total.dems / (total.dems + total.reps)
+abs.prop.diff <- abs(prop.dems - 0.5) # absolute difference in proportion of dems/reps
+abs.prop.diff[which.min(abs.prop.diff)] # North Dakota!
+```
+
+6. How many times has the majority party in the House of Representatives changed?
+
+```{r}
+dem.majority <- house.dems > house.reps # logical vector if dems have majority
+party.change <- 0 # variable to count party changes
+for(i in 2:length(dem.majority)) {  # this will loop through each congress
+  if(dem.majority[i] != dem.majority[i-1]) { # check if the majority changed from previous congress
+    party.change<- party.change + 1 # if so, add 1 to party.change count
+  }
+}
+party.change
+```
+
+7. Which state in the 113th congress has the most experienced congressmen (measured my the average number of congresses in which they served)?
+
+```{r}
+experience <- rep(0, nrow(congress)) # new experience variable
+for(i in 2:nrow(congress)) {
+  # count previous appearances of each congressman
+  experience[i] <- sum(congress$firstname[1:(i-1)] == congress$firstname[i] & congress$lastname[1:(i-1)] == congress$lastname[i])
+}
+congress$experience <- experience # add this to congress data frame
+congress.113 <- subset(congress, congress == 113)
+exp.table <- tapply(congress$experience, congress$state, mean)
+exp.table[which.max(exp.table)]
+```

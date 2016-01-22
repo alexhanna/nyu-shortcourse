@@ -1,0 +1,79 @@
+---
+title: "Data Science Exercise"
+author: "Pablo Barbera, Dan Cervone"
+date: "January 22, 2016"
+output: html_document
+---
+
+In this exercise, we're going to explore what makes news stories go viral. The data we'll use is from the New York Times facebook page. At the end of the session, we'll ask you to present your results to the class very briefly (2-3 min) and casually (just the html output of this Rmd file will do). **Bolded items** below should be part of your presentation!
+
+1. Try downloading a small sample of data from the NYT facebook page.
+
+% Note: the 'eval=FALSE' argument below prevents the R code from being run when you compile
+% the RMarkdown document, since it's slow
+```{r, eval=FALSE} 
+library(Rfacebook)
+# check the help for the function fbOauth (type into R console ?fbOAuth)
+# for instructions on obtaining a temporary access token
+# when you have a token, paste it in place of abc123" below
+auth_token <- "abc123" 
+nyt.fb <- getPage(page="nytimes", token=auth_token, n=100, since="2015/01/01")
+```
+
+2. Now, read in a larger sample of data from your computer (this saves a lot of downloading time!). Explore some basic features of the data such as how many entries it contains, what variables are included, and what type (class) these variables are.
+
+```{r, echo=FALSE}
+nyt.fb <- read.csv("./nyt-fb.csv", stringsAsFactors=FALSE)
+```
+
+3. (Optional but possibly helpful) Create separate variables for month and time (just hour) of each post and add them to your data frame. Note that the time is UTC, which is 5 hours ahead of Eastern Time. These are potentially useful factors in predicting whether a post goes viral (e.g. maybe there is less activity over the summer months or late in the day).
+
+```{r, echo=FALSE}
+
+```
+
+4. **Come up with criteria for determining whether a post is "viral".** For example, it might help to look at a histogram of likes, counts, or shares (or some combination of these variables). Create a logical variable `viral` based on this and add it to your data frame.**
+
+```{r, echo=FALSE}
+
+```
+
+#### Please complete at least 2 out of the following 3 tasks
+
+5. **Fit a topic model to the message content of each post.** Incorporate the results as a feature you add to your `nyt.fb` data frame. Note that you will need to preprocess the text first (removing punctuation, converting to lowercase, etc.).
+
+```{r, echo=FALSE}
+
+```
+
+6. **Search message content for some key words of interest, such as "israel", "yankees", "trump", etc. For each key word, create a new variable for whether the message content contains that word.** Add these variables to the `nyt.fb` data frame. It will be helpful to use regular expressions to match the key words as flexibly as possible.
+
+```{r, echo=FALSE}
+
+```
+
+7. **Using the file `lexicon.csv` we saw in the "text" module, extract a sentiment score for the content of each message**. Add this score to the `nyt.fb` data frame.
+
+```{r, echo=FALSE}
+
+```
+
+
+8. **Build a statistical or machine learning model (e.g. regression, support vector machine) to classify whether posts are viral based on any features of the data (including those you've created in this exercise) EXCEPT the number of shares, counts, or likes.** Note that it might be advantageous to first train a model to predict some combination of shares, counts, and/or likes (if you used that to define your `viral` variable), and then classify "viral" or not based on the predictions of that model.
+
+```{r, echo=FALSE}
+
+```
+
+9. **Using cross validation or out-of-sample testing (this is when you train the model on a subst of data, and test model predictions on the remaining data), evaluate the predictive performance of your model.** 
+
+```{r, echo=FALSE}
+
+```
+
+10. **Find 2 examples of posts that you predict are viral**.
+
+```{r, echo=FALSE}
+
+```
+
