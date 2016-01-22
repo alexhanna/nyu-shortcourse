@@ -132,11 +132,28 @@ Authentication
 Social media APIs
 ========================================================
 
-R packages:
-- Twitter: `streamR` for streaming, `twitteR` or `smappR` for REST
-- Facebook: `Rfacebook`
+Twitter:
 
-Many others on [CRAN Web Technologies Task View](https://cran.r-project.org/web/views/WebTechnologies.html)
+1. REST API:
+  - Data about user profiles, friends and followers, and recent tweets
+  - R packages: `twitteR` or `smappR`
+2. Streaming API:
+  - "Stream" of tweets as they are being published
+  - Filter by: 1) by keywords, 2) by location, 3) random sampling
+  - R package: `streamR`
+
+Facebook:
+
+- Graph API: data from public Facebook pages (posts, likes, comments)
+- R package: `Rfacebook`
+
+
+Other APIs
+========================================================
+
+[CRAN Web Technologies Task View](https://cran.r-project.org/web/views/WebTechnologies.html)
+
+
 
 
 

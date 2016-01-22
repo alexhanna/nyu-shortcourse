@@ -7,6 +7,8 @@ output: html_document
 
 ### Scraping web data from Facebook
 
+To scrape data from Facebook's API, we'll use the `Rfacebook` package.
+
 ```{r}
 #install.packages("Rfacebook")
 library(Rfacebook)
@@ -31,9 +33,9 @@ Does it return your Facebook public information? Yes? Then we're ready to go. Se
 
 At the moment, the only information that can be scraped from Facebook is the content of public pages. Let's start with the posts of the page of Barack Obama, for example.
 
-The following line downloads the ~100 most recent posts on the facebook page of Barack Obama
+The following line downloads the ~100 most recent posts on the facebook page of Rbloggers
 ```{r}
-page <- getPage("barackobama", token=fb_oauth, n=100) 
+page <- getPage("rbloggers", token=fb_oauth, n=200) 
 ```
 
 What information is available for each of these posts?
@@ -48,23 +50,25 @@ page[which.max(page$comments_count),]
 page[which.max(page$shares_count),]
 ```
 
-We can also subset by date. For example, imagine we want to get all the posts from October 2012
+We can also subset by date. For example, imagine we want to get all the posts from November 2012 on Mitt Rommney's Facebook page
 ```{r}
-page <- getPage("barackobama", token=fb_oauth, n=1000,
-	since='2012/10/01', until='2012/10/30')
+page <- getPage("mittromney", token=fb_oauth, n=1000,
+	since='2012/11/01', until='2012/11/30')
 page[which.max(page$likes_count),]
 ```
 
-And if we need to, we could also extract the specific comments from each post.
+And if we need to, we can also extract the specific comments from each post.
 ```{r}
 post_id <- page$id[which.max(page$likes_count)]
 post <- getPost(post_id, token=fb_oauth, n.comments=1000, likes=FALSE)
 ```
+
 This is how you can view those comments:
 ```{r}
 comments <- post$comments
 head(comments)
 ```
+
 Also, note that users can like comments! What is the comment that got the most likes?
 ```{r}
 comments[which.max(comments$likes_count),]
@@ -96,7 +100,7 @@ my_oauth <- OAuthFactory$new(consumerKey=consumerKey,
   accessURL=accessURL, authURL=authURL)
 ```
 
-Run the below line and go to the URL that appears on screen. Then,type the PIN into the console (RStudio sometimes doesn't show what you're typing, but it's there!)
+Run the below line and go to the URL that appears on screen. Then, type the PIN into the console (RStudio sometimes doesn't show what you're typing, but it's there!)
 
 ```{r, eval=FALSE}
 my_oauth$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
@@ -116,7 +120,7 @@ Collecting tweets filtering by keyword:
 #install.packages("streamR")
 library(streamR)
 load("~/git/data-science-workshop/scraping/credentials/twitter-token.Rdata")
-filterStream(file.name="palin-tweets.json", track="palin", 
+filterStream(file.name="blizzard-tweets.json", track="blizzard", 
     timeout=30, oauth=my_oauth)
 ```
 
@@ -128,14 +132,15 @@ Note the options:
 
 Once it has finished, we can open it in R as a data frame with the `parseTweets` function
 ```{r}
-tweets <- parseTweets("palin-tweets.json")
+tweets <- parseTweets("blizzard-tweets.json")
 str(tweets)
+tweets[1,]
 ```
 
 And this is how we would capture tweets mentioning multiple keywords:
-```{r}
-filterStream(file.name="political_tweets.json", 
-	track=c("obama", "bush", "clinton", "trump"),
+```{r, eval=FALSE}
+filterStream(file.name="snow-tweets.json", 
+	track=c("blizzard", "snow", "winter storm", "snowfall"),
     tweets=50, oauth=my_oauth)
 ```
 
@@ -168,7 +173,7 @@ head(sort(table(states), decreasing=TRUE))
 
 We can also prepare a map of the exact locations of the tweets.
 
-```{r, fig.height=4, fig.width=10}
+```{r, fig.height=6, fig.width=10}
 #install.packages("ggplot2")
 library(ggplot2)
 
@@ -229,7 +234,8 @@ length(grep("bieber", tweets$text, ignore.case=TRUE))
 
 #### Collecting data from Twitter's REST API
 
-Collecting recent tweets (less than 7 days old)
+It is possible to download recent tweets, but only up those less than 7 days old, and in some cases not all of them. We will use the `smappR` package for this (and the other functions that scrape Twitter's REST API).
+
 ```{r}
 #install.packages("devtools")
 library(devtools)
@@ -237,7 +243,7 @@ library(devtools)
 library(smappR)
 
 searchTweets(q="palin", filename="palin-tweets.json",
-  n=200, until="2016-01-19", result_type="popular",
+  n=200, until="2016-01-20", 
   oauth_folder="~/git/data-science-workshop/scraping/credentials")
 
 tweets <- parseTweets("palin-tweets.json")
@@ -245,7 +251,8 @@ tweets <- parseTweets("palin-tweets.json")
 
 You can check the documentation about the options for string search [here](https://dev.twitter.com/rest/public/search).
 
-Extracting information from user profiles
+This is how you would extract information from user profiles:
+
 ```{r}
 reps <- c("RealBenCarson", "tedcruz", "CarlyFiorina", "GrahamBlog", 
     "GovMikeHuckabee", "GovernorPataki", "RandPaul", "marcorubio", 
@@ -266,7 +273,7 @@ Who is the candidate with the most followers?
 users[which.max(users$followers_count),]
 ```
 
-Download up to 3,200 recent tweets from a Twitter account
+Download up to 3,200 recent tweets from a Twitter account:
 ```{r}
 getTimeline(filename="trump-tweets.json", screen_name="realDonaldTrump", 
     n=1000, oauth_folder="~/git/data-science-workshop/scraping/credentials")
@@ -280,20 +287,28 @@ ht <- unlist(ht)
 head(sort(table(ht), decreasing = TRUE))
 ```
 
-
-Download friends and followers
+Download friends and followers:
 ```{r}
 followers <- getFollowers("NYUdatascience", 
     oauth_folder="~/git/data-science-workshop/scraping/credentials")
 ```
 
 What are the most common words that followers of NYUDataScience use to describe themselves on Twitter?
-```{r}
+```{r, fig.height=6, fig.width=6}
+# extract profile descriptions
 users <- getUsersBatch(ids=followers,
     oauth_folder="~/git/data-science-workshop/scraping/credentials")
-wf <- word.frequencies(users$description[users$description!=""])
+# create table with frequency of word use
+library(RTextTools)
+dtm <- create_matrix(users$description[users$description!=""], language = "en", weighting = tm::weightTfIdf)
+wf <- data.frame(
+  word = Terms(dtm),
+  freq = apply(dtm, 2, sum) )
+wf <- wf[order(wf$freq),]
+# create wordcloud
 library(wordcloud)
-wordcloud(words = names(wf), freq = wf, max.words = 50, rot.per = 0)
+par(mar=c(0,0,0,0))
+wordcloud(words = wf$word, freq = wf$freq, max.words = 100, rot.per = 0)
 ```
 
 
