@@ -69,7 +69,7 @@ nyt_count <- function(q, date1, date2){
   return(json$response$meta$hits)
 }
 
-nyt_count(q="inequality", date1=20140101, date2=20141231)
+nyt_count(q="inequality", date1=20160101, date2=20160122)
 ```
 
 Ok, so this seems to work. But we want to run this function multiple times, so let's write another function that helps us do that.
@@ -105,7 +105,7 @@ nyt_count <- function(q, date1, date2){
                                 "end_date"=date2))
   json <- content(r, "parsed")
   ## if there is no response
-  while (is.null(json$response)){
+  while (r$status_code!=200){
     Sys.sleep(2) # wait a couple of seconds
     # try again:
     r <- GET(base_url, query=list(q=q,
